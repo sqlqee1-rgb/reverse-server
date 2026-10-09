@@ -9,6 +9,9 @@
  */
 'use strict';
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const zlib = require('zlib');
 const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 // shared rules: the standalone server repo ships a copy next to this file, the game repo uses the client's file
@@ -249,6 +252,33 @@ function handle(p, m) {
   }
 }
 
+/* ---------- the game itself as a web app (iPhone: Safari → Add to Home Screen) ---------- */
+const WEB = (() => {
+  try {
+    const pwa = require('./pwa.js');
+    const html = fs.readFileSync(path.join(__dirname, 'game.html'));
+    const files = {
+      '/': { type: 'text/html; charset=utf-8', body: html, cache: 'no-cache' },
+      '/manifest.webmanifest': { type: 'application/manifest+json', body: Buffer.from(JSON.stringify(pwa.manifest)), cache: 'public, max-age=3600' },
+      '/sw.js': { type: 'text/javascript; charset=utf-8', body: Buffer.from(pwa.sw), cache: 'no-cache' },
+    };
+    for (const [p, b64] of Object.entries(pwa.icons)) files[p] = { type: 'image/png', body: Buffer.from(b64, 'base64'), cache: 'public, max-age=604800' };
+    for (const f of Object.values(files)) if (!f.type.startsWith('image/')) f.gz = zlib.gzipSync(f.body, { level: 9 });
+    files['/index.html'] = files['/'];
+    console.log('web app', pwa.version, Math.round(html.length / 1024) + 'KB');
+    return files;
+  } catch (e) { console.log('web app not bundled (' + e.message + ')'); return null; }
+})();
+function serveWeb(req, res) {
+  const f = WEB && WEB[req.url.split('?')[0]];
+  if (!f || req.method !== 'GET' && req.method !== 'HEAD') return false;
+  const gz = f.gz && /\bgzip\b/.test(req.headers['accept-encoding'] || '');
+  res.writeHead(200, { 'Content-Type': f.type, 'Cache-Control': f.cache, 'Vary': 'Accept-Encoding',
+    ...(gz ? { 'Content-Encoding': 'gzip' } : {}), 'X-Content-Type-Options': 'nosniff' });
+  res.end(req.method === 'HEAD' ? undefined : (gz ? f.gz : f.body));
+  return true;
+}
+
 /* ---------- transport ---------- */
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -259,6 +289,7 @@ const server = http.createServer((req, res) => {
       total: totalMatches, uptime: Math.round((now() - startedAt) / 1000) }));
     return;
   }
+  if (serveWeb(req, res)) return;
   res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
   res.end('Reverse duel server\n');
 });
