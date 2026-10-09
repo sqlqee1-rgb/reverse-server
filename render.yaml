@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: reverse-duel
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: node index.js
+    healthCheckPath: /healthz
+    autoDeploy: true
