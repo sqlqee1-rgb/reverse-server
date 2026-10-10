@@ -297,6 +297,25 @@
     });
     return ev;
   }
+  // owner mode (enabled only by the server for one secret key): double points, and the board never jams —
+  // when it gets tight, bolts and then the smallest tiles are cleared. Deterministic on purpose.
+  function bossAssist(st, ev) {
+    var gained = 0, removed = [];
+    (ev || []).forEach(function (e) { if (e.type === 'merge') e.groups.forEach(function (g) { gained += g.pts; }); });
+    st.score += gained;
+    if (empties(st).length <= 2) {
+      var cells = [];
+      for (var c = 0; c < CELLS; c++) if (st.board[c]) cells.push(c);
+      cells.sort(function (a, b) { return (st.board[a].v - st.board[b].v) || (a - b); }); // bolts (v=0) first
+      for (var i = 0; i < cells.length && empties(st).length < 7; i++) {
+        var t = st.board[cells[i]];
+        removed.push({ id: t.id, cell: cells[i], v: t.v });
+        st.board[cells[i]] = null;
+      }
+      st.over = false; st.jammed = false;
+    }
+    return { bonus: gained, removed: removed };
+  }
   function hash(st) {
     var s = st.score + '|' + st.queue.join(',') + '|' + st.board.map(function (t) { return t ? t.v : '-'; }).join(',');
     return hashSeed(s);
@@ -306,7 +325,7 @@
     N: N, CELLS: CELLS, CORE: CORE, OUTER: OUTER, INNER: INNER, RING: RING, NB: NB, BALANCE: BALANCE,
     dest: dest, newGame: newGame, place: place, hammer: hammer, swap: swap, toggleReverse: toggleReverse,
     giveUp: giveUp, preview: preview, empties: empties, clone: clone, hashSeed: hashSeed, allGroups: allGroups,
-    attack: attack, pickGarbage: pickGarbage, addBolts: addBolts, hash: hash,
+    attack: attack, pickGarbage: pickGarbage, addBolts: addBolts, hash: hash, bossAssist: bossAssist,
     DUEL_RULES: { bolts: false, hammer: false }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

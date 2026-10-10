@@ -18,6 +18,11 @@ const { WebSocketServer } = require('ws');
 const L = (() => { try { return require('./logic.js'); } catch (e) { return require('../web/js/logic.js'); } })();
 
 const PORT = +process.env.PORT || 8080;
+const ADMIN_KEY = String(process.env.ADMIN_KEY || '');
+function isBoss(key) {
+  if (!ADMIN_KEY || typeof key !== 'string' || key.length !== ADMIN_KEY.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY));
+}
 const PROTOCOL = 1;
 const COUNTDOWN = 3000;
 const DURATION = L.BALANCE.duel.seconds * 1000;
@@ -99,7 +104,10 @@ class Match {
     if (now() < this.startAt - 250) return p.send({ type: 'error', code: 'early' });
     if (m.seq !== this.seq[side] + 1) return this.resync(p);
     let ev = null;
-    if (m.a === 'place' && Number.isInteger(m.c) && m.c >= 0 && m.c < 25 && !st.board[m.c]) ev = L.place(st, m.c);
+    if (m.a === 'place' && Number.isInteger(m.c) && m.c >= 0 && m.c < 25 && !st.board[m.c]) {
+      ev = L.place(st, m.c);
+      if (ev && p.boss) L.bossAssist(st, ev);
+    }
     else if (m.a === 'rev') ev = L.toggleReverse(st);
     else if (m.a === 'swap') ev = L.swap(st);
     if (!ev) return this.resync(p);
@@ -107,10 +115,14 @@ class Match {
     let sent = 0, cancel = 0, garbage = [];
     if (m.a === 'place') {
       let a = L.attack(ev);
+      if (p.boss) a = Math.min(L.BALANCE.duel.maxHit + 2, a * 2 + (ev.some((e) => e.type === 'merge') ? 1 : 0));
       cancel = Math.min(a, this.pend[side]); this.pend[side] -= cancel; a -= cancel;
       if (a > 0) {
-        this.pend[1 - side] += a; this.sent[side] += a; sent = a;
-        other.send({ type: 'incoming', n: a, pending: this.pend[1 - side] });
+        this.sent[side] += a; sent = a;
+        if (!other.boss) {   // attacks on the owner look sent but never land
+          this.pend[1 - side] += a;
+          other.send({ type: 'incoming', n: a, pending: this.pend[1 - side] });
+        }
       }
       if (!st.over && this.pend[side] > 0) {
         garbage = L.pickGarbage(st, this.pend[side], this.rng[side]);
@@ -133,6 +145,9 @@ class Match {
     this.over = true;
     clearTimeout(this.timer); clearTimeout(this.botTimer);
     if (reason === 'time') {
+      const bs = this.p.findIndex((x) => x.boss);
+      if (bs >= 0 && !this.p[1 - bs].boss && this.st[bs].score <= this.st[1 - bs].score)
+        this.st[bs].score = this.st[1 - bs].score + 2 * (5 + Math.floor(Math.random() * 60));
       const a = this.st[0].score, b = this.st[1].score;
       winner = a === b ? -1 : (a > b ? 0 : 1);
     }
@@ -310,7 +325,8 @@ wss.on('connection', (ws) => {
         if (old.ws && old.ws !== ws) try { old.ws.terminate(); } catch (e) { }
         me = old; me.ws = ws; me.offlineAt = 0; if (m.name) me.name = cleanName(m.name);
       } else me = new Player(ws, m.name);
-      me.send({ type: 'welcome', id: me.id, token: me.token, online: onlineCount(), protocol: PROTOCOL });
+      me.boss = isBoss(m.key);
+      me.send({ type: 'welcome', id: me.id, token: me.token, online: onlineCount(), protocol: PROTOCOL, ...(me.boss ? { boss: true } : {}) });
       if (me.match) {
         me.send(me.match.resumeMsg(me.side));
         me.match.p[1 - me.side].send({ type: 'opp_status', online: true });

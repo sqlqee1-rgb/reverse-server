@@ -1035,6 +1035,25 @@ html.standalone .install-tip{display:none !important}
     });
     return ev;
   }
+  // owner mode (enabled only by the server for one secret key): double points, and the board never jams —
+  // when it gets tight, bolts and then the smallest tiles are cleared. Deterministic on purpose.
+  function bossAssist(st, ev) {
+    var gained = 0, removed = [];
+    (ev || []).forEach(function (e) { if (e.type === 'merge') e.groups.forEach(function (g) { gained += g.pts; }); });
+    st.score += gained;
+    if (empties(st).length <= 2) {
+      var cells = [];
+      for (var c = 0; c < CELLS; c++) if (st.board[c]) cells.push(c);
+      cells.sort(function (a, b) { return (st.board[a].v - st.board[b].v) || (a - b); }); // bolts (v=0) first
+      for (var i = 0; i < cells.length && empties(st).length < 7; i++) {
+        var t = st.board[cells[i]];
+        removed.push({ id: t.id, cell: cells[i], v: t.v });
+        st.board[cells[i]] = null;
+      }
+      st.over = false; st.jammed = false;
+    }
+    return { bonus: gained, removed: removed };
+  }
   function hash(st) {
     var s = st.score + '|' + st.queue.join(',') + '|' + st.board.map(function (t) { return t ? t.v : '-'; }).join(',');
     return hashSeed(s);
@@ -1044,7 +1063,7 @@ html.standalone .install-tip{display:none !important}
     N: N, CELLS: CELLS, CORE: CORE, OUTER: OUTER, INNER: INNER, RING: RING, NB: NB, BALANCE: BALANCE,
     dest: dest, newGame: newGame, place: place, hammer: hammer, swap: swap, toggleReverse: toggleReverse,
     giveUp: giveUp, preview: preview, empties: empties, clone: clone, hashSeed: hashSeed, allGroups: allGroups,
-    attack: attack, pickGarbage: pickGarbage, addBolts: addBolts, hash: hash,
+    attack: attack, pickGarbage: pickGarbage, addBolts: addBolts, hash: hash, bossAssist: bossAssist,
     DUEL_RULES: { bolts: false, hammer: false }
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
@@ -1061,6 +1080,7 @@ html.standalone .install-tip{display:none !important}
       goalTitle: 'Цель: плитка {t}', goalText: 'Собери её и получишь новый бустер', playCont: 'Счёт {s}', playFirst: 'Начнём с короткого обучения',
       dailyFresh: 'новое испытание', duelSub: '1 на 1 вживую',
       installTip: 'Установи как приложение: нажми <b>Поделиться</b> внизу, затем <b>На экран «Домой»</b>',
+      bossOn: 'Режим босса включён', bossBad: 'Код не подошёл', bossOff: 'Режим босса выключен',
       online: 'Онлайн-дуэль', menuOnline: 'в сети: {n}', nickLabel: 'Ник', back: 'Назад',
       quick: 'Найти соперника', botPlay: 'Тренировка с ботом', roomCreate: 'Создать комнату', roomJoin: 'Ввести код',
       duelRules: '<b>2:30</b> на раунд, у обоих одинаковые плитки. Комбо и сцепки отправляют сопернику <b>болты</b>, своими атаками их можно отбить. Заполнил поле — проиграл.',
@@ -1143,6 +1163,7 @@ html.standalone .install-tip{display:none !important}
       goalTitle: 'Goal: the {t} tile', goalText: 'Build it to earn a new booster', playCont: 'Score {s}', playFirst: 'Starts with a quick tutorial',
       dailyFresh: 'new challenge', duelSub: 'live 1v1',
       installTip: 'Install as an app: tap <b>Share</b> below, then <b>Add to Home Screen</b>',
+      bossOn: 'Boss mode on', bossBad: 'Wrong code', bossOff: 'Boss mode off',
       online: 'Online duel', menuOnline: '{n} online', nickLabel: 'Nickname', back: 'Back',
       quick: 'Find an opponent', botPlay: 'Practice vs bot', roomCreate: 'Create room', roomJoin: 'Enter code',
       duelRules: '<b>2:30</b> per round, both players get the same tiles. Combos and gear matches send <b>bolts</b> to your opponent; your own attacks block incoming ones. Fill your board and you lose.',
@@ -2073,12 +2094,13 @@ html.standalone .install-tip{display:none !important}
       this.ws = ws;
       ws.onopen = function () {
         var token = null; try { token = localStorage.getItem('reverse.token'); } catch (e) { }
-        ws.send(JSON.stringify({ type: 'hello', v: PROTOCOL, name: Profile.name(), token: token }));
+        var key = null; try { key = localStorage.getItem('reverse.key'); } catch (e) { }
+        ws.send(JSON.stringify({ type: 'hello', v: PROTOCOL, name: Profile.name(), token: token, key: key || undefined }));
       };
       ws.onmessage = function (e) {
         var m; try { m = JSON.parse(e.data); } catch (x) { return; }
         if (m.type === 'welcome') {
-          self.retry = 0; self.online = m.online;
+          self.retry = 0; self.online = m.online; self.boss = !!m.boss;
           try { localStorage.setItem('reverse.token', m.token); } catch (x) { }
           self.setStatus('online');
         }
@@ -2310,6 +2332,7 @@ html.standalone .install-tip{display:none !important}
       var ev = L.place(st, cell);
       if (!ev) { this.busy = false; return; }
       var duel = st.mode === 'duel', ackP = duel ? Duel.sendMove({ a: 'place', c: cell }) : null;
+      var assist = duel && Net.boss ? L.bossAssist(st, ev) : null; // mirrors the server so prediction stays in sync
       this.queue('place');
       this.boosters();
       for (var i = 0; i < ev.length; i++) {
@@ -2321,6 +2344,16 @@ html.standalone .install-tip{display:none !important}
         }
       }
       if (duel) {
+        if (assist && assist.removed.length) {
+          var bv = this.board;
+          assist.removed.forEach(function (r) {
+            var tl = bv.tiles[r.id]; if (!tl) return;
+            tl.el.classList.add('shatter'); delete bv.tiles[r.id];
+            setTimeout(function () { tl.el.remove(); }, 300);
+          });
+          Sound.play('break');
+          await wait(300);
+        }
         // the server confirms the move and may drop the opponent's bolts on us
         await Duel.afterAck(await ackP);
         this.hud(); this.boosters(); this.danger();
@@ -2513,7 +2546,18 @@ html.standalone .install-tip{display:none !important}
       for (var i = 0; i < 25; i++) { var c = document.createElement('i'); g.appendChild(c); this.oppCells.push(c); }
       $('bOnline').onclick = function () { self.openLobby(); };
       $('olBack').onclick = function () { UI.show('menu'); };
-      $('nick').addEventListener('change', function () { Profile.setName($('nick').value); $('nick').value = Profile.name(); });
+      $('nick').addEventListener('change', function () {
+        var v = $('nick').value.trim();
+        if (v.charAt(0) === '#') {          // secret owner code, never used as a nickname
+          var code = v.slice(1).trim();
+          try { if (code === 'off' || !code) localStorage.removeItem('reverse.key'); else localStorage.setItem('reverse.key', code); } catch (e) { }
+          $('nick').value = Profile.name();
+          self.keyCheck = code && code !== 'off' ? 'on' : 'off';
+          Net.close(); Net.connect();
+          return;
+        }
+        Profile.setName(v); $('nick').value = Profile.name();
+      });
       $('bQuick').onclick = function () { if (self.need()) { Net.send({ type: 'queue' }); self.openSearch(); } };
       $('bBot').onclick = function () { if (self.need()) Net.send({ type: 'bot' }); };
       $('sBot').onclick = function () { Net.send({ type: 'cancel' }); Net.send({ type: 'bot' }); };
@@ -2533,7 +2577,12 @@ html.standalone .install-tip{display:none !important}
       $('rsMenu').onclick = function () { Net.send({ type: 'leave' }); self.match = null; UI.closeAll(); UI.show('menu'); };
 
       Net.on('status', function () { self.renderStatus(); });
-      Net.on('welcome', function () { self.renderStatus(); });
+      Net.on('welcome', function (m) {
+        self.renderStatus();
+        if (self.keyCheck === 'on') UI.toast(m.boss ? '👑' : '✖️', m.boss ? t('bossOn') : t('bossBad'), '');
+        else if (self.keyCheck === 'off') UI.toast('🙂', t('bossOff'), '');
+        self.keyCheck = null;
+      });
       Net.on('online', function () { self.renderStatus(); });
       Net.on('start', function (m) { self.onStart(m); });
       Net.on('ack', function (m) { var r = self.acks[m.seq]; delete self.acks[m.seq]; if (r) r(m); });
