@@ -60,6 +60,13 @@ class MemoryStore {
     this.acc.set(a.id, { ...a, bot: true, ccChangedAt: null, sid: this._sid(a.id), creatorOn: true }); this.sec.set(a.id, sha(crypto.randomBytes(16)));
   }
   async findBySid(sid) { const id = this.sids.get(+sid); return id ? this.get(id) : null; }
+  // move an account to another short id: 'ok' | 'no_source' | 'taken'
+  async moveSid(from, to) {
+    const id = this.sids.get(+from); if (!id) return 'no_source';
+    if (this.sids.has(+to)) return 'taken';
+    this.sids.delete(+from); this.sids.set(+to, id); const a = this.acc.get(id); if (a) a.sid = +to;
+    return 'ok';
+  }
   async getMany(ids) { return ids.map((i) => this.acc.get(i)).filter(Boolean).map((a) => ({ ...a })); }
   /* friends: one row per pair, a = who asked; state 'pending' or 'ok' */
   async friendRows(x) { return [...this.fr.values()].filter((r) => r.a === x || r.b === x).map((r) => ({ ...r })); }
@@ -310,6 +317,10 @@ class PgStore {
     await this._setSid(a.id);
   }
   async findBySid(sid) { const r = await this.q(`SELECT ${SELECT} FROM accounts WHERE sid = $1`, [+sid || 0]); return fix(r.rows[0]) || null; }
+  async moveSid(from, to) {
+    try { const r = await this.q(`UPDATE accounts SET sid = $2 WHERE sid = $1`, [+from, +to]); return r.rowCount ? 'ok' : 'no_source'; }
+    catch (e) { if (e.code === '23505') return 'taken'; throw e; }
+  }
   async getMany(ids) { if (!ids.length) return []; const r = await this.q(`SELECT ${SELECT} FROM accounts WHERE id = ANY($1)`, [ids]); return r.rows.map(fix); }
   async friendRows(x) { return (await this.q(`SELECT a, b, state, extract(epoch from at)*1000 AS at FROM friends WHERE a = $1 OR b = $1`, [x])).rows.map((r) => ({ ...r, at: +r.at })); }
   async friendSet(a, b, state) {

@@ -683,7 +683,18 @@ setInterval(() => { bots.catchUp().then((n) => { if (n) topCache.clear(); }); },
 setInterval(() => { if (R.seasonId() !== season) ensureSeason().catch((e) => console.error('season rollover failed', e)); }, 60000);
 
 // if the database is unreachable (expired free plan, wrong URL) the game still runs on the in-memory store
-const ready = store.init().then(() => store.markGlobal(social.GLOBAL_SIDS)).catch((e) => {
+// one-time ID moves, "OLD>NEW,OLD>NEW" (default: the owner's 429582 becomes 000001). Each move runs once, recorded in meta.
+async function sidMoves() {
+  for (const mv of String(process.env.SID_MOVES || '429582>1').split(/[,\s]+/).filter(Boolean)) {
+    const [from, to] = mv.split('>').map(Number); if (!from || !to) continue;
+    const key = 'sidmove:' + from + '>' + to;
+    if (await store.getMeta(key)) continue;
+    const r = await store.moveSid(from, to);
+    if (r !== 'no_source') await store.setMeta(key, r);
+    console.log('id move', from, '->', to, r);
+  }
+}
+const ready = store.init().then(sidMoves).then(() => store.markGlobal(social.GLOBAL_SIDS)).catch((e) => {
   console.error('DATABASE UNAVAILABLE, running on memory store (ratings will not persist):', e.message);
   store = Store.create(null);
   return store.init();

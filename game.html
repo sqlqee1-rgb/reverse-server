@@ -1976,10 +1976,10 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bsText_3: 'Место {r} в мировом рейтинге по итогам сезона {n}.', bsText_4: 'Место {r} в мировом топ-100 по итогам сезона {n}.',
       bsRank: 'Выдаётся в конце сезона: 1 место, топ-3, топ-10 и топ-100 мира', bsHow: 'Закончи сезон в мировом топ-100, и значок появится здесь.',
       bText_inf: 'Знак автора, который рассказывает об игре. Выдаёт команда Reverse.', bText_creator: 'Создатель игры Reverse.',
-      sys_donor: 'Спасибо за поддержку! Значок «{t}» уже у твоего ника.', usage_donor: 'Так: /donor ID 1|2|3', sys_donation: 'Поддержка: {n} (ID {id}) — уровень {t}, {source}',
+      sys_donor: 'Спасибо за поддержку! Значок «{t}» уже у твоего ника.', done_setid: 'Готово: ID игрока {n} изменён с {o} на {id}', usage_setid: 'Так: /setid СТАРЫЙ_ID НОВЫЙ_ID (число от 1 до 999999)', sys_id_taken: 'Этот ID уже занят.', usage_donor: 'Так: /donor ID 1|2|3', sys_donation: 'Поддержка: {n} (ID {id}) — уровень {t}, {source}',
       done_donor: 'Готово: {n} получил значок поддержки', done_undonor: 'Готово: значок поддержки снят', done_donatelink: 'Ссылка для оплаты в веб-версии сохранена', done_donatelink_off: 'Ссылка для оплаты убрана',
       friendsTab: 'Друзья', chatTab: 'Чат', friendsTitle: 'Друзья', chatTitle: 'Чат', addShort: 'Добавить', addFriend: 'Добавить друга',
-      addFriendText: 'Введи ID игрока — шесть цифр из его профиля.', sendRequest: 'Отправить заявку', afBad: 'ID — это 6 цифр',
+      addFriendText: 'Введи ID игрока — шесть цифр из его профиля.', sendRequest: 'Отправить заявку', afBad: 'ID — это 6 цифр, например 000001',
       af_no_player: 'Игрока с таким ID нет', af_self: 'Это твой ID', af_already: 'Вы уже друзья', af_friends_full: 'В друзьях максимум 200 человек',
       myId: 'Мой ID', copyId: 'Копировать', myIdHint: 'Дай этот ID другу, чтобы он добавил тебя. Или найди его профиль в рейтинге и нажми «В друзья».',
       frIncoming: 'Заявки', frList: 'Друзья', frOutgoing: 'Отправленные заявки', frBlocked: 'Заблокированные', frWants: 'хочет добавить тебя',
@@ -2016,14 +2016,14 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       sys_untop: 'Модератор обнулил твой рейтинг в этом сезоне за нарушение правил.', sys_badge: 'Тебе выдан значок «Инфлюенсер». Он виден у твоего ника всем игрокам.',
       sys_unbadge: 'Значок «Инфлюенсер» снят.', sys_bad_link: 'Ссылка должна начинаться с https://',
       sys_stats: 'Сейчас: игроков {humans}, ботов в сети {bots}. Аккаунтов {accounts}, рейтинговых матчей {matches}, открытых жалоб {open}.',
-      sys_reports: 'Открытых жалоб: {n}', sys_unknown: 'Нет команды /{c}. Напиши /help.', sys_no_player: 'Игрок «{r}» не найден. Нужен ID из 6 цифр.',
+      sys_reports: 'Открытых жалоб: {n}', sys_unknown: 'Нет команды /{c}. Напиши /help.', sys_no_player: 'Игрок «{r}» не найден. Нужен ID, например 000001.',
       sys_owner_new: 'Аккаунт {n} (ID {id}) стал владельцем игры.',
       usage_ban: 'Так: /ban ID 1d|7d|30d|forever причина', usage_mute: 'Так: /mute ID 1h|1d|7d', usage_announce: 'Так: /announce текст объявления',
       done_ban: 'Готово: {n} (ID {id}) в бане на {d}', done_unban: 'Готово: с {n} снят бан', done_mute: 'Готово: {n} в муте на {d}', done_unmute: 'Готово: с {n} снят мут',
       done_rename: 'Готово: ник «{o}» сброшен', done_untop: 'Готово: {n} убран из топа', done_badge: 'Готово: {n} получил значок «Инфлюенсер»', done_unbadge: 'Готово: у {n} снят значок',
       done_link: 'Готово: ссылка {n} обновлена', done_announce: 'Объявление отправлено в мировой чат', done_creator_on: 'Твой значок «Создатель» включён', done_creator_off: 'Твой значок «Создатель» скрыт',
       sys_help_short: 'Список команд',
-      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/global ID on|off — ранг Global<br>/creator on|off — твой значок',
+      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/global ID on|off — ранг Global<br>/setid ID НОВЫЙ — сменить ID игроку<br>/creator on|off — твой значок',
       vsWin: 'Победа', vsLose: 'Поражение', vsCasual: 'Обычный матч: рейтинг не меняется', vsTraining: 'Тренировка: рейтинг не меняется',
       vsStreak: 'Серия побед: {n}',
       delAcc: 'Удалить онлайн-аккаунт', delAsk: 'Удалить онлайн-аккаунт?', delYes: 'Удалить',
@@ -2067,10 +2067,10 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bsText_3: 'Место {r} в мировом рейтинге по итогам сезона {n}.', bsText_4: 'Место {r} в мировом топ-100 по итогам сезона {n}.',
       bsRank: 'Выдаётся в конце сезона: 1 место, топ-3, топ-10 и топ-100 мира', bsHow: 'Закончи сезон в мировом топ-100, и значок появится здесь.',
       bText_inf: 'Знак автора, который рассказывает об игре. Выдаёт команда Reverse.', bText_creator: 'Создатель игры Reverse.',
-      sys_donor: 'Спасибо за поддержку! Значок «{t}» уже у твоего ника.', usage_donor: 'Так: /donor ID 1|2|3', sys_donation: 'Поддержка: {n} (ID {id}) — уровень {t}, {source}',
+      sys_donor: 'Спасибо за поддержку! Значок «{t}» уже у твоего ника.', done_setid: 'Готово: ID игрока {n} изменён с {o} на {id}', usage_setid: 'Так: /setid СТАРЫЙ_ID НОВЫЙ_ID (число от 1 до 999999)', sys_id_taken: 'Этот ID уже занят.', usage_donor: 'Так: /donor ID 1|2|3', sys_donation: 'Поддержка: {n} (ID {id}) — уровень {t}, {source}',
       done_donor: 'Готово: {n} получил значок поддержки', done_undonor: 'Готово: значок поддержки снят', done_donatelink: 'Ссылка для оплаты в веб-версии сохранена', done_donatelink_off: 'Ссылка для оплаты убрана',
       friendsTab: 'Друзья', chatTab: 'Чат', friendsTitle: 'Друзья', chatTitle: 'Чат', addShort: 'Добавить', addFriend: 'Добавить друга',
-      addFriendText: 'Введи ID игрока — шесть цифр из его профиля.', sendRequest: 'Отправить заявку', afBad: 'ID — это 6 цифр',
+      addFriendText: 'Введи ID игрока — шесть цифр из его профиля.', sendRequest: 'Отправить заявку', afBad: 'ID — это 6 цифр, например 000001',
       af_no_player: 'Игрока с таким ID нет', af_self: 'Это твой ID', af_already: 'Вы уже друзья', af_friends_full: 'В друзьях максимум 200 человек',
       myId: 'Мой ID', copyId: 'Копировать', myIdHint: 'Дай этот ID другу, чтобы он добавил тебя. Или найди его профиль в рейтинге и нажми «В друзья».',
       frIncoming: 'Заявки', frList: 'Друзья', frOutgoing: 'Отправленные заявки', frBlocked: 'Заблокированные', frWants: 'хочет добавить тебя',
@@ -2107,14 +2107,14 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       sys_untop: 'Модератор обнулил твой рейтинг в этом сезоне за нарушение правил.', sys_badge: 'Тебе выдан значок «Инфлюенсер». Он виден у твоего ника всем игрокам.',
       sys_unbadge: 'Значок «Инфлюенсер» снят.', sys_bad_link: 'Ссылка должна начинаться с https://',
       sys_stats: 'Сейчас: игроков {humans}, ботов в сети {bots}. Аккаунтов {accounts}, рейтинговых матчей {matches}, открытых жалоб {open}.',
-      sys_reports: 'Открытых жалоб: {n}', sys_unknown: 'Нет команды /{c}. Напиши /help.', sys_no_player: 'Игрок «{r}» не найден. Нужен ID из 6 цифр.',
+      sys_reports: 'Открытых жалоб: {n}', sys_unknown: 'Нет команды /{c}. Напиши /help.', sys_no_player: 'Игрок «{r}» не найден. Нужен ID, например 000001.',
       sys_owner_new: 'Аккаунт {n} (ID {id}) стал владельцем игры.',
       usage_ban: 'Так: /ban ID 1d|7d|30d|forever причина', usage_mute: 'Так: /mute ID 1h|1d|7d', usage_announce: 'Так: /announce текст объявления',
       done_ban: 'Готово: {n} (ID {id}) в бане на {d}', done_unban: 'Готово: с {n} снят бан', done_mute: 'Готово: {n} в муте на {d}', done_unmute: 'Готово: с {n} снят мут',
       done_rename: 'Готово: ник «{o}» сброшен', done_untop: 'Готово: {n} убран из топа', done_badge: 'Готово: {n} получил значок «Инфлюенсер»', done_unbadge: 'Готово: у {n} снят значок',
       done_link: 'Готово: ссылка {n} обновлена', done_announce: 'Объявление отправлено в мировой чат', done_creator_on: 'Твой значок «Создатель» включён', done_creator_off: 'Твой значок «Создатель» скрыт',
       sys_help_short: 'Список команд',
-      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/global ID on|off — ранг Global<br>/creator on|off — твой значок',
+      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/global ID on|off — ранг Global<br>/setid ID НОВЫЙ — сменить ID игроку<br>/creator on|off — твой значок',
       vsWin: 'Победа', vsLose: 'Поражение', vsCasual: 'Обычный матч: рейтинг не меняется', vsTraining: 'Тренировка: рейтинг не меняется',
       vsStreak: 'Серия побед: {n}',
       delAcc: 'Удалить онлайн-аккаунт', delAsk: 'Удалить онлайн-аккаунт?', delYes: 'Удалить',
@@ -2239,7 +2239,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bsText_3: 'Place {r} in the world ranking at the end of season {n}.', bsText_4: 'Place {r} in the world top 100 at the end of season {n}.',
       bsRank: 'Given at the end of each season: 1st place, top 3, top 10 and top 100 of the world', bsHow: 'Finish a season in the world top 100 and the badge shows up here.',
       bText_inf: 'A creator who makes videos about the game. Given by the Reverse team.', bText_creator: 'The creator of Reverse.',
-      sys_donor: 'Thank you for the support! The “{t}” badge is next to your name.', usage_donor: 'Use: /donor ID 1|2|3', sys_donation: 'Support: {n} (ID {id}), tier {t}, {source}',
+      sys_donor: 'Thank you for the support! The “{t}” badge is next to your name.', done_setid: 'Done: {n} now has ID {id} (was {o})', usage_setid: 'Use: /setid OLD_ID NEW_ID (a number from 1 to 999999)', sys_id_taken: 'That ID is already taken.', usage_donor: 'Use: /donor ID 1|2|3', sys_donation: 'Support: {n} (ID {id}), tier {t}, {source}',
       done_donor: 'Done: {n} got a supporter badge', done_undonor: 'Done: supporter badge removed', done_donatelink: 'Web payment link saved', done_donatelink_off: 'Web payment link removed',
       friendsTab: 'Friends', chatTab: 'Chat', friendsTitle: 'Friends', chatTitle: 'Chat', addShort: 'Add', addFriend: 'Add a friend',
       addFriendText: 'Enter the player’s ID: the six digits in their profile.', sendRequest: 'Send request', afBad: 'An ID is 6 digits',
@@ -2286,7 +2286,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Done: nickname “{o}” reset', done_untop: 'Done: {n} removed from the ranking', done_badge: 'Done: {n} got the “Influencer” badge', done_unbadge: 'Done: {n} lost the badge',
       done_link: 'Done: link for {n} updated', done_announce: 'Announcement sent to the world chat', done_creator_on: 'Your “Creator” badge is on', done_creator_off: 'Your “Creator” badge is hidden',
       sys_help_short: 'Command list',
-      sys_help: '<b>Commands</b> (ID is the 6 digits in a profile)<br>/info ID — player card with buttons<br>/badge ID link — give “Influencer” (link optional)<br>/unbadge ID — take the badge away<br>/link ID link — social link<br>/ban ID 1d|7d|30d|forever reason<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — reset nickname<br>/untop ID — remove from the ranking<br>/reports — open reports<br>/announce text — world chat announcement<br>/stats — who is online<br>/donor ID 1|2|3 — give a supporter badge · /undonor ID<br>/donatelink link — web payments<br>/global ID on|off — Global rank<br>/creator on|off — your badge',
+      sys_help: '<b>Commands</b> (ID is the 6 digits in a profile)<br>/info ID — player card with buttons<br>/badge ID link — give “Influencer” (link optional)<br>/unbadge ID — take the badge away<br>/link ID link — social link<br>/ban ID 1d|7d|30d|forever reason<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — reset nickname<br>/untop ID — remove from the ranking<br>/reports — open reports<br>/announce text — world chat announcement<br>/stats — who is online<br>/donor ID 1|2|3 — give a supporter badge · /undonor ID<br>/donatelink link — web payments<br>/global ID on|off — Global rank<br>/setid ID NEW — change a player’s ID<br>/creator on|off — your badge',
       vsWin: 'Win', vsLose: 'Loss', vsCasual: 'Casual match: rating doesn’t change', vsTraining: 'Practice: rating doesn’t change',
       vsStreak: 'Win streak: {n}',
       delAcc: 'Delete online account', delAsk: 'Delete online account?', delYes: 'Delete',
@@ -4317,7 +4317,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     if (b.k === 'donor') return { name: t('bd_' + (b.t || 1)), text: t('bdText_' + (b.t || 1)), note: t('bdNote'), rare: 4 - (b.t || 1) };
     return { name: t('badge_' + b.k), text: t('bText_' + b.k), note: '', rare: b.k === 'creator' ? 0 : 2 };
   }
-  function sidText(sid) { sid = String(sid || ''); return sid.length === 6 ? sid.slice(0, 3) + ' ' + sid.slice(3) : sid; }
+  function sidPad(sid) { sid = String(sid == null ? '' : sid).replace(/\D/g, ''); return sid && sid.length < 6 ? ('000000' + sid).slice(-6) : sid; }
+  function sidText(sid) { sid = sidPad(sid); return sid.length === 6 ? sid.slice(0, 3) + ' ' + sid.slice(3) : sid; }
   // presence in words: in a match, searching, online, or how long ago
   function statusText(st) {
     if (!st) return '';
@@ -4476,7 +4477,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         '<button class="link-btn danger" id="pfDelete">' + t('delAcc') + '</button>';
       body.innerHTML = h;
       var self = this;
-      if ($('pfSid')) $('pfSid').onclick = function () { UI.shareText(String(p.sid), true); };
+      if ($('pfSid')) $('pfSid').onclick = function () { UI.shareText(sidPad(p.sid), true); };
       Badges.wireStand(body);
       if ($('pfLink')) $('pfLink').onclick = function () { openUrl(p.link); };
       if (!mine && d) this.wireActions(p, d);
@@ -4710,7 +4711,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
 
   root.Social = S;
   root.PX = { isGlobal: isGlobal, globe: globe, badgeList: badgeList, badgeIcons: badgeIcons, badgeInfo: badgeInfo, avatar: avatar, avatarF: avatarF, flag: flag, cname: cname, tag: tag, tierLabel: tierLabel, badge: badge, glyph: glyph, esc: esc, placed: placed,
-    seasonLeft: seasonLeft, nextLabel: nextLabel, badgeIcon: badgeIcon, sidText: sidText, statusText: statusText, linkInfo: linkInfo, openUrl: openUrl, ago: ago };
+    seasonLeft: seasonLeft, nextLabel: nextLabel, badgeIcon: badgeIcon, sidText: sidText, sidPad: sidPad, statusText: statusText, linkInfo: linkInfo, openUrl: openUrl, ago: ago };
 })(this);
 
 </script>
@@ -4884,7 +4885,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         }).join('') + '</div>';
       }
       body.innerHTML = h;
-      var copy = $('frCopy'); if (copy) copy.onclick = function () { if (me && me.sid) UI.shareText(String(me.sid), true); };
+      var copy = $('frCopy'); if (copy) copy.onclick = function () { if (me && me.sid) UI.shareText(PX.sidPad(me.sid), true); };
       body.querySelectorAll('.frow').forEach(function (row) {
         var id = row.getAttribute('data-pid');
         row.onclick = function (e) {
@@ -5143,6 +5144,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         case 'usage': r = t('usage_' + d.cmd); break;
         case 'unknown': r = t('sys_unknown', { c: d.cmd || '' }); break;
         case 'no_player': r = t('sys_no_player', { r: d.ref || '' }); break;
+        case 'id_taken': r = t('sys_id_taken'); break;
         case 'owner_new': r = t('sys_owner_new', { n: d.name || '', id: PX.sidText(d.sid) }); break;
         case 'help': r = plain ? t('sys_help_short') : t('sys_help'); break;
         case 'donor': r = t('sys_donor', { t: t('bd_' + (d.t || 1)) }); break;

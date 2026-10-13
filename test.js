@@ -237,6 +237,15 @@ async function startBoth(a, b) {
   u2.drop('profile'); u2.send({ type: 'profile', id: u1.me.id }); const gp = await u2.next('profile');
   assert.strictEqual(gp.p.rank, 'global'); assert.strictEqual(gp.p.rating, null); assert.strictEqual(gp.world, null);
   u1.send({ type: 'top', scope: 'world' }); const gt = await u1.next('top'); assert.ok(!gt.list.some((x) => x.id === u1.me.id)); assert.strictEqual(gt.me.pos, null);
+  // changing an ID: /setid OLD NEW keeps the account, the Global rank and friends; taken IDs are refused; "000001" finds him
+  const oldSid = u1.me.sid; u1.drop('me'); own.send({ type: 'say', to: 'admin', text: '/setid ' + oldSid + ' 000001' });
+  assert.strictEqual((await u1.next('me')).me.sid, 1);
+  own.send({ type: 'say', to: 'admin', text: '/setid ' + u2.me.sid + ' 1' }); await sleep(500);   // 000001 is taken now
+  u3.drop('friend_sent'); u3.send({ type: 'friend_add', sid: '000001' }); await u3.next('friend_sent');
+  u2.drop('profile'); u2.send({ type: 'profile', id: u1.me.id }); const sidp = await u2.next('profile'); assert.strictEqual(sidp.p.sid, 1); assert.strictEqual(sidp.p.rank, 'global');
+  u3.drop('profile'); u3.send({ type: 'profile', id: u2.me.id }); assert.strictEqual((await u3.next('profile')).p.sid, u2.me.sid, 'taken id is refused');
+  own.drop('dm'); own.send({ type: 'say', to: 'admin', text: '/info 1' });
+  let inf1; for (let i = 0; i < 6 && !(inf1 && inf1.msg.kind === 'info'); i++) inf1 = await own.next('dm'); assert.strictEqual(inf1.msg.data.target.sid, 1);
   const hz = await (await fetch(`http://127.0.0.1:${PORT}/healthz`)).json(); assert.ok(hz.online >= hz.players);
   console.log('social ok: ids', u1.me.sid, u2.me.sid, '| online', hz.online, 'players', hz.players);
 

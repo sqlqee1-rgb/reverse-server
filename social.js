@@ -56,7 +56,7 @@ module.exports = function createSocial(ctx) {
   }
   const isOwner = (a) => !!a && a.role === 'owner';
   // the one-of-a-kind "Global" rank: above every league, with no rating or place shown anywhere
-  const GLOBAL_SIDS = String(process.env.GLOBAL_SIDS || '429582').split(/[,\s]+/).filter(Boolean).map(Number);
+  const GLOBAL_SIDS = String(process.env.GLOBAL_SIDS || '1').split(/[,\s]+/).filter(Boolean).map(Number);
   const isGlobal = (a) => !!a && (a.rankTitle === 'global' || GLOBAL_SIDS.includes(+a.sid));
   // what other players may see about an account
   function card(a) {
@@ -329,6 +329,7 @@ module.exports = function createSocial(ctx) {
   async function findTarget(ref) {
     const s = store(), x = String(ref || '').replace(/^#/, '');
     if (/^\d{6}$/.test(x)) return s.findBySid(x);
+    if (/^\d{1,5}$/.test(x) && +x > 0) return s.findBySid(x);   // 1 = 000001
     return x ? s.get(x) : null;
   }
   async function command(p, text) {
@@ -369,6 +370,17 @@ module.exports = function createSocial(ctx) {
       await store().patch(t.id, f); if (lp) { Object.assign(lp.acc, f); lp.send(meMsg(lp)); }
       ctx.topChanged();
       return sys('admin', 'done', { act: on ? 'global_on' : 'global_off', name: t.name, sid: t.sid });
+    }
+    if (c === 'setid') {
+      const t = await findTarget(ref), to = String(rest[0] || '').replace(/\D/g, '');
+      if (!t) return sys('admin', 'no_player', { ref: ref || '' });
+      if (!to || +to < 1 || +to > 999999) return sys('admin', 'usage', { cmd: 'setid' });
+      const from = t.sid, r = await store().moveSid(from, +to);
+      if (r === 'taken') return sys('admin', 'id_taken', { id: +to });
+      if (r !== 'ok') return sys('admin', 'no_player', { ref: ref || '' });
+      const lp = byAcc.get(t.id); if (lp) { lp.acc.sid = +to; lp.send(meMsg(lp)); }
+      ctx.topChanged(); onChange();
+      return sys('admin', 'done', { act: 'setid', name: t.name, sid: +to, o: String(from) });
     }
     if (c === 'donatelink') {
       const u = (ref || '').trim();
@@ -418,7 +430,7 @@ module.exports = function createSocial(ctx) {
       }
       case 'unmute': await set({ mutedUntil: null }); await sys(a.id, 'unmute'); break;
       case 'rename': {
-        const old = a.name, name = 'Player ' + a.sid;
+        const old = a.name, name = 'Player ' + String(a.sid).padStart(6, '0');
         await set({ name }); await sys(a.id, 'rename', { old }); note = { old }; ctx.topChanged(); break;
       }
       case 'untop': {
