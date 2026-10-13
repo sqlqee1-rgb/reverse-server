@@ -1044,6 +1044,21 @@ html.standalone .install-tip{display:none !important}
 .ab.on{background:#ffc84a33;color:#ffe08a}
 @media (prefers-reduced-motion:reduce){.bdg.k-donor.t3 .halo,.bdg.big .shine,.overlay.on .bg-glow{animation:none}}
 
+/* ======================= Global: the one-of-a-kind rank ======================= */
+.glb .gm,.glb .ge{transform-origin:32px 32px}
+.glb.big .gm{animation:spin 6s linear infinite}
+.glb.big .ge{animation:spin 9s linear infinite reverse}
+.glob-name{background:linear-gradient(90deg,#3fd8f2,#9a8bff 35%,#ff6fb5 70%,#ffd166);-webkit-background-clip:text;background-clip:text;color:transparent !important;
+  background-size:200% 100%;animation:holo 5s linear infinite}
+@keyframes holo{to{background-position:-200% 0}}
+.league.glob{background:linear-gradient(135deg,#123a52,#2b1d63 45%,#4a1f4e);box-shadow:0 4px 0 var(--lip),inset 0 0 0 1.5px #ffffff1f}
+.league.glob .lg-name{font-size:26px}
+.league.glob .lg-next{color:#d8cff5;font-size:13px;line-height:1.4}
+.vc-rank.glob{background:#0d072666;box-shadow:inset 0 0 0 1.5px #9a8bff40}
+.glob-ach .ic{background:none !important;opacity:1 !important}
+.glob-ach b{background:linear-gradient(90deg,#3fd8f2,#ff6fb5,#ffd166);-webkit-background-clip:text;background-clip:text;color:transparent}
+@media (prefers-reduced-motion:reduce){.glb.big .gm,.glb.big .ge,.glob-name{animation:none}}
+
 </style>
 </head>
 <body>
@@ -1304,7 +1319,7 @@ html.standalone .install-tip{display:none !important}
     <button class="btn" id="sPrivacy" data-i18n="privacy"></button>
     <button class="btn ghost" id="sReset" style="color:var(--danger)" data-i18n="resetProgress"></button>
   </div>
-  <div class="version">Reverse 1.4.0</div>
+  <div class="version">Reverse 1.4.1</div>
 </div></div>
 
 
@@ -1937,6 +1952,10 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bossOn: 'Режим босса включён', bossBad: 'Код не подошёл', bossOff: 'Режим босса выключен',
       lobbyTitle: 'Дуэли', olTop: 'Топ сезона', olAll: 'Весь', olEmpty: 'Топ сезона пока пуст. Сыграй {n} рейтинговых матча — и ты в нём.',
       res_win: 'Победа', res_lose: 'Поражение', res_draw: 'Ничья',
+      globalText: 'Единственный ранг в игре. Он выше всех лиг, у него нет рейтинга и места в топе — только один игрок во всём мире носит его.',
+      globalNote: 'Существует в одном экземпляре', globalCard: 'Единственный ранг в игре. Выше всех лиг, без рейтинга и места.', globalShort: 'вне рейтинга',
+      globalTop: 'Ранг Global: вне таблиц рейтинга', vsGlobalMe: 'Ты Global: твой рейтинг скрыт', vsGlobalOpp: 'Соперник с рангом Global — единственный в игре',
+      achGlobal: 'Global', achGlobalText: 'Получить единственный ранг в игре', done_global_on: 'Готово: у {n} (ID {id}) теперь ранг Global', done_global_off: 'Готово: у {n} снят ранг Global',
       shopTab: 'Магазин', shopTitle: 'Магазин', offlineChip: 'не в сети',
       shopHero: 'Поддержи Reverse', shopText: 'Игра бесплатная и без рекламы. Поддержка оплачивает сервер и новые режимы, а ты получаешь значок, который видят все.',
       bd_1: 'Сторонник', bd_2: 'Меценат', bd_3: 'Легенда',
@@ -2004,7 +2023,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Готово: ник «{o}» сброшен', done_untop: 'Готово: {n} убран из топа', done_badge: 'Готово: {n} получил значок «Инфлюенсер»', done_unbadge: 'Готово: у {n} снят значок',
       done_link: 'Готово: ссылка {n} обновлена', done_announce: 'Объявление отправлено в мировой чат', done_creator_on: 'Твой значок «Создатель» включён', done_creator_off: 'Твой значок «Создатель» скрыт',
       sys_help_short: 'Список команд',
-      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/creator on|off — твой значок',
+      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/global ID on|off — ранг Global<br>/creator on|off — твой значок',
       vsWin: 'Победа', vsLose: 'Поражение', vsCasual: 'Обычный матч: рейтинг не меняется', vsTraining: 'Тренировка: рейтинг не меняется',
       vsStreak: 'Серия побед: {n}',
       delAcc: 'Удалить онлайн-аккаунт', delAsk: 'Удалить онлайн-аккаунт?', delYes: 'Удалить',
@@ -2024,6 +2043,10 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       incoming: 'летит', sent: 'Атака ×{n}', blocked: 'Блок ×{n}', duel: 'Дуэль',
       resignAsk: 'Сдаться?', resignText: 'Победа достанется сопернику.', resignYes: 'Сдаться',
       res_win: 'Победа', res_lose: 'Поражение', res_draw: 'Ничья',
+      globalText: 'Единственный ранг в игре. Он выше всех лиг, у него нет рейтинга и места в топе — только один игрок во всём мире носит его.',
+      globalNote: 'Существует в одном экземпляре', globalCard: 'Единственный ранг в игре. Выше всех лиг, без рейтинга и места.', globalShort: 'вне рейтинга',
+      globalTop: 'Ранг Global: вне таблиц рейтинга', vsGlobalMe: 'Ты Global: твой рейтинг скрыт', vsGlobalOpp: 'Соперник с рангом Global — единственный в игре',
+      achGlobal: 'Global', achGlobalText: 'Получить единственный ранг в игре', done_global_on: 'Готово: у {n} (ID {id}) теперь ранг Global', done_global_off: 'Готово: у {n} снят ранг Global',
       shopTab: 'Магазин', shopTitle: 'Магазин', offlineChip: 'не в сети',
       shopHero: 'Поддержи Reverse', shopText: 'Игра бесплатная и без рекламы. Поддержка оплачивает сервер и новые режимы, а ты получаешь значок, который видят все.',
       bd_1: 'Сторонник', bd_2: 'Меценат', bd_3: 'Легенда',
@@ -2091,7 +2114,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Готово: ник «{o}» сброшен', done_untop: 'Готово: {n} убран из топа', done_badge: 'Готово: {n} получил значок «Инфлюенсер»', done_unbadge: 'Готово: у {n} снят значок',
       done_link: 'Готово: ссылка {n} обновлена', done_announce: 'Объявление отправлено в мировой чат', done_creator_on: 'Твой значок «Создатель» включён', done_creator_off: 'Твой значок «Создатель» скрыт',
       sys_help_short: 'Список команд',
-      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/creator on|off — твой значок',
+      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/global ID on|off — ранг Global<br>/creator on|off — твой значок',
       vsWin: 'Победа', vsLose: 'Поражение', vsCasual: 'Обычный матч: рейтинг не меняется', vsTraining: 'Тренировка: рейтинг не меняется',
       vsStreak: 'Серия побед: {n}',
       delAcc: 'Удалить онлайн-аккаунт', delAsk: 'Удалить онлайн-аккаунт?', delYes: 'Удалить',
@@ -2192,6 +2215,10 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bossOn: 'Boss mode on', bossBad: 'Wrong code', bossOff: 'Boss mode off',
       lobbyTitle: 'Duels', olTop: 'Season top', olAll: 'All', olEmpty: 'The season top is still empty. Play {n} ranked matches to get in.',
       res_win: 'Win', res_lose: 'Loss', res_draw: 'Draw',
+      globalText: 'The one and only rank in the game. Above every league, with no rating and no leaderboard place: a single player in the whole world holds it.',
+      globalNote: 'Exists in a single copy', globalCard: 'The only rank of its kind. Above every league, no rating, no place.', globalShort: 'beyond the ranking',
+      globalTop: 'Global rank: outside the leaderboards', vsGlobalMe: 'You are Global: your rating is hidden', vsGlobalOpp: 'Your opponent holds the Global rank, the only one in the game',
+      achGlobal: 'Global', achGlobalText: 'Hold the only rank of its kind', done_global_on: 'Done: {n} (ID {id}) now holds the Global rank', done_global_off: 'Done: Global rank removed from {n}',
       shopTab: 'Shop', shopTitle: 'Shop', offlineChip: 'offline',
       shopHero: 'Support Reverse', shopText: 'The game is free with no ads. Support pays for the server and new modes, and you get a badge everyone can see.',
       bd_1: 'Supporter', bd_2: 'Patron', bd_3: 'Legend',
@@ -2259,7 +2286,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Done: nickname “{o}” reset', done_untop: 'Done: {n} removed from the ranking', done_badge: 'Done: {n} got the “Influencer” badge', done_unbadge: 'Done: {n} lost the badge',
       done_link: 'Done: link for {n} updated', done_announce: 'Announcement sent to the world chat', done_creator_on: 'Your “Creator” badge is on', done_creator_off: 'Your “Creator” badge is hidden',
       sys_help_short: 'Command list',
-      sys_help: '<b>Commands</b> (ID is the 6 digits in a profile)<br>/info ID — player card with buttons<br>/badge ID link — give “Influencer” (link optional)<br>/unbadge ID — take the badge away<br>/link ID link — social link<br>/ban ID 1d|7d|30d|forever reason<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — reset nickname<br>/untop ID — remove from the ranking<br>/reports — open reports<br>/announce text — world chat announcement<br>/stats — who is online<br>/donor ID 1|2|3 — give a supporter badge · /undonor ID<br>/donatelink link — web payments<br>/creator on|off — your badge',
+      sys_help: '<b>Commands</b> (ID is the 6 digits in a profile)<br>/info ID — player card with buttons<br>/badge ID link — give “Influencer” (link optional)<br>/unbadge ID — take the badge away<br>/link ID link — social link<br>/ban ID 1d|7d|30d|forever reason<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — reset nickname<br>/untop ID — remove from the ranking<br>/reports — open reports<br>/announce text — world chat announcement<br>/stats — who is online<br>/donor ID 1|2|3 — give a supporter badge · /undonor ID<br>/donatelink link — web payments<br>/global ID on|off — Global rank<br>/creator on|off — your badge',
       vsWin: 'Win', vsLose: 'Loss', vsCasual: 'Casual match: rating doesn’t change', vsTraining: 'Practice: rating doesn’t change',
       vsStreak: 'Win streak: {n}',
       delAcc: 'Delete online account', delAsk: 'Delete online account?', delYes: 'Delete',
@@ -3741,7 +3768,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       if (me && d.me && d.me.pos) {
         h += '<div class="olt-me"><span class="chip">' + PX.glyph('#i-globe') + t('worldPos', { n: fmt(d.me.pos) }) + '</span>' +
           (c && c.me && c.me.pos && c.cc === me.cc ? '<span class="chip"><span class="fl">' + PX.flag(me.cc) + '</span>' + PX.esc(PX.cname(me.cc)) + ' #' + fmt(c.me.pos) + '</span>' : '') + '</div>';
-      } else if (me && d.list.length) h += '<p class="olt-empty">' + t('mePlace', { n: Math.max(1, Rank.PLACEMENT - (me.sGames || 0)) }) + '</p>';
+      } else if (me && PX.isGlobal(me)) h += '<p class="olt-empty">' + t('globalTop') + '</p>';
+      else if (me && d.list.length) h += '<p class="olt-empty">' + t('mePlace', { n: Math.max(1, Rank.PLACEMENT - (me.sGames || 0)) }) + '</p>';
       el.innerHTML = h;
       el.onclick = function () { Social.openTop('world'); };
       el.querySelectorAll('[data-pid]').forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); Social.openProfile(b.getAttribute('data-pid')); }; });
@@ -3771,6 +3799,13 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       } else {
         var k = Rank.rankOf(me.rating), placed = PX.placed(me), tier = Rank.TIERS[k.idx];
         el.style.setProperty('--t1', tier.c1);
+        if (PX.isGlobal(me)) {
+          el.innerHTML = PX.avatarF(me, 56) + '<span class="mc-body"><span class="mc-name">' + PX.tag(me, false) + '</span>' +
+            '<span class="mc-tier glob-name">Global</span><span class="mc-next">' + t('globalShort') + '</span></span>' + PX.globe(52, true);
+          var sz0 = Net.season;
+          $('olSeason').innerHTML = sz0 ? '<b>' + t('seasonN', { n: sz0.n }) + '</b><span>' + t('seasonEnds', { d: PX.seasonLeft(sz0.ends) }) + '</span>' : '';
+          return;
+        }
         el.innerHTML = PX.avatarF(me, 56) +
           '<span class="mc-body"><span class="mc-name">' + PX.tag(me, false) + '</span>' +
           '<span class="mc-tier">' + PX.tierLabel(me) + (placed ? ' · <b>' + fmt(me.rating) + '</b>' : '') + '</span>' +
@@ -3817,6 +3852,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         PX.badgeIcons(p, 24) + '</div>' +
         '<div class="vc-cc">' + (training ? t('botTier') : '<span class="fl">' + PX.flag(p.cc) + '</span><span>' + PX.esc(PX.cname(p.cc)) + '</span>') + '</div></div></div>';
       if (training) return h;
+      if (PX.isGlobal(p)) return h + '<div class="vc-rank glob">' + PX.globe(46, true) + '<div class="vc-rk"><b class="glob-name">Global</b><span>' + t('globalShort') + '</span></div></div>';
       var k = Rank.rankOf(p.rating), placed = PX.placed(p);
       h += '<div class="vc-rank" style="--t1:' + Rank.TIERS[k.idx].c1 + '">' + PX.badge(p, 46) +
         '<div class="vc-rk"><b>' + PX.tierLabel(p) + '</b><span>' + (placed ? '<em>' + fmt(p.rating) + '</em> ' + t('rp') : t('calibText', { n: Rank.PLACEMENT - (p.sGames || 0) })) + '</span></div>' +
@@ -3830,6 +3866,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     vsStakes: function (m) {
       var y = m.you, o = m.opp;
       if (!m.ranked) return '<p class="vs-note">' + t(o.bot && !o.id ? 'vsTraining' : 'vsCasual') + '</p>';
+      if (PX.isGlobal(y)) return '<p class="vs-note">' + t('vsGlobalMe') + '</p>';
+      if (PX.isGlobal(o)) return '<p class="vs-note">' + t('vsGlobalOpp') + '</p>';
       var up = Rank.delta(y.rating, o.rating, 1, y.games || 0, 1), down = Rank.delta(y.rating, o.rating, 0, y.games || 0, 1);
       return '<div class="vs-stake up"><span>' + t('vsWin') + '</span><b>+' + up + '</b></div>' +
         '<div class="vs-stake down"><span>' + t('vsLose') + '</span><b>\u2212' + Math.abs(down) + '</b></div>';
@@ -4130,13 +4168,27 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     var l = I18N.get();
     try { dn[l] = dn[l] || new Intl.DisplayNames([l], { type: 'region' }); return dn[l].of(cc) || cc; } catch (e) { return cc; }
   }
-  function placed(p) { return (p.sGames || 0) >= Rank.PLACEMENT; }
+  function isGlobal(p) { return !!p && p.rank === 'global'; }
+  // the Global rank emblem: a globe drawn by the game's two counter-turning rings, in a holographic frame
+  function globe(size, big, extra) {
+    return '<svg class="emblem glb' + (big ? ' big' : '') + (extra || '') + '" viewBox="0 0 64 64" width="' + size + '" height="' + size + '" aria-hidden="true">' +
+      '<circle cx="32" cy="32" r="29" fill="url(#g-holo)"/><circle cx="32" cy="32" r="25.5" fill="#120a30"/>' +
+      '<circle cx="32" cy="32" r="25.5" fill="none" stroke="url(#g-holo)" stroke-width="1.2" stroke-opacity=".7"/>' +
+      '<g class="gm"><ellipse cx="32" cy="32" rx="8.5" ry="19" fill="none" stroke="#3fd8f2" stroke-width="3.4"/></g>' +
+      '<g class="ge"><ellipse cx="32" cy="32" rx="19" ry="7.5" fill="none" stroke="#ff8a3d" stroke-width="3.4"/></g>' +
+      '<circle cx="32" cy="32" r="19" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="2.4"/>' +
+      '<circle cx="32" cy="32" r="3.6" fill="#ffd166"/>' +
+      '<path d="M49.5 9.5l1.3 3.4 3.4 1.3-3.4 1.3-1.3 3.4-1.3-3.4-3.4-1.3 3.4-1.3z" fill="#fff"/>' +
+      (big ? '<g clip-path="url(#c-glb)"><g class="shine"><rect x="-20" y="-6" width="14" height="80" fill="url(#g-shine)" transform="rotate(20 32 32)"/></g></g>' : '') + '</svg>';
+  }
+  function placed(p) { return !isGlobal(p) && (p.sGames || 0) >= Rank.PLACEMENT; }
   function tierLabel(p) {
+    if (isGlobal(p)) return 'Global';
     if (!placed(p)) return t('calib', { n: p.sGames || 0, m: Rank.PLACEMENT });
     var k = Rank.rankOf(p.rating);
     return t('tier_' + k.tier) + (k.div ? ' ' + Rank.ROMAN[k.div] : '');
   }
-  function badge(p, size) { return Rank.badge(p.rating, size, p.sGames); }
+  function badge(p, size) { return isGlobal(p) ? globe(size) : Rank.badge(p.rating, size, p.sGames); }
   function nextLabel(rating) {
     var k = Rank.rankOf(rating);
     if (k.hi == null) return '';
@@ -4187,6 +4239,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       '<linearGradient id="g-d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa3a3"/><stop offset="1" stop-color="#ff3d64"/></linearGradient>' +
       '<linearGradient id="g-d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7b8ff"/><stop offset="1" stop-color="#7a45ff"/></linearGradient>' +
       '<linearGradient id="g-d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".55" stop-color="#ffc84a"/><stop offset="1" stop-color="#ff9a1f"/></linearGradient>' +
+      '<linearGradient id="g-holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3fd8f2"/><stop offset=".35" stop-color="#9a8bff"/><stop offset=".7" stop-color="#ff6fb5"/><stop offset="1" stop-color="#ffd166"/></linearGradient>' +
+      '<clipPath id="c-glb"><circle cx="32" cy="32" r="29"/></clipPath>' +
       '<radialGradient id="g-halo"><stop offset="0" stop-color="#ffd166" stop-opacity=".55"/><stop offset="1" stop-color="#ffd166" stop-opacity="0"/></radialGradient>' +
       '<linearGradient id="g-s1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset="1" stop-color="#f0a92a"/></linearGradient>' +
       '<linearGradient id="g-s2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#a9b6cc"/></linearGradient>' +
@@ -4199,6 +4253,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     b = b || { k: kind };
     var cls = 'bdg k-' + kind + (big ? ' big' : ''), sz = ' width="' + size + '" height="' + size + '"';
     var data = ' data-b="' + esc(JSON.stringify(b)) + '"';
+    if (kind === 'global') return globe(size, big, ' bdg k-global" data-b="' + esc(JSON.stringify(b)));
     if (kind === 'donor') {
       var tt = Math.max(1, Math.min(3, b.t || 1));
       return '<svg class="' + cls + ' t' + tt + '"' + sz + data + ' viewBox="0 0 32 32" aria-hidden="true">' +
@@ -4244,19 +4299,21 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
   // the badges shown next to a name: creator, best season place, supporter, influencer (at most three)
   function badgeList(p) {
     var l = (p && p.badges) || (p && p.badge ? [{ k: p.badge }] : []), out = [], seen = {};
-    ['creator', 'season', 'donor', 'inf'].forEach(function (k) {
+    ['global', 'creator', 'season', 'donor', 'inf'].forEach(function (k) {
       var b = l.filter(function (x) { return x.k === k; })[0];
       if (b && !seen[k]) { seen[k] = 1; out.push(b); }
     });
     return out.slice(0, 3);
   }
-  function badgeIcons(p, size) { return badgeList(p).map(function (b) { return badgeIcon(b, size); }).join(''); }
+  // the Global rank already stands in for the league emblem, so it isn't repeated as a badge next to the name
+  function badgeIcons(p, size) { return badgeList(p).filter(function (b) { return b.k !== 'global'; }).map(function (b) { return badgeIcon(b, size); }).join(''); }
   // name, description and where it came from, for the badge sheet and the stand
   function badgeInfo(b) {
     if (b.k === 'season') {
       var tr = seasonTier(b.r), n = Rank.seasonNumber(b.s);
       return { name: t('bs_' + tr, { n: n }), text: t('bsText_' + tr, { n: n, r: b.r }), note: t('bsRank', { r: b.r, n: n }), rare: tr };
     }
+    if (b.k === 'global') return { name: 'Global', text: t('globalText'), note: t('globalNote'), rare: 0 };
     if (b.k === 'donor') return { name: t('bd_' + (b.t || 1)), text: t('bdText_' + (b.t || 1)), note: t('bdNote'), rare: 4 - (b.t || 1) };
     return { name: t('badge_' + b.k), text: t('bText_' + b.k), note: '', rare: b.k === 'creator' ? 0 : 2 };
   }
@@ -4393,14 +4450,16 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       if (li) h += '<button class="pf-link" id="pfLink"><span class="li-ic">' + glyph(LINK_GLYPH[li.kind] || '#i-link') + '</span><span class="li-t"><b>' + esc(li.name) + '</b>' +
         (li.handle ? '<span>' + esc(li.handle) + '</span>' : '') + '</span>' + glyph('#i-chev', 'chev') + '</button>';
       if (!mine && d) h += this.actionsHTML(p, d);
-      // league card
-      h += '<div class="league" style="--t1:' + Rank.TIERS[k.idx].c1 + ';--t2:' + Rank.TIERS[k.idx].c2 + '">' + badge(p, 84) +
+      // league card (the Global rank gets its own, with no numbers)
+      if (isGlobal(p)) h += '<div class="league glob">' + globe(92, true) + '<div class="lg-main"><div class="lg-name glob-name">Global</div>' +
+        '<div class="lg-next">' + t('globalCard') + '</div></div></div>';
+      else h += '<div class="league" style="--t1:' + Rank.TIERS[k.idx].c1 + ';--t2:' + Rank.TIERS[k.idx].c2 + '">' + badge(p, 84) +
         '<div class="lg-main"><div class="lg-name">' + tierLabel(p) + '</div>' +
         (isPlaced ? '<div class="lg-rp"><b>' + fmt(p.rating) + '</b> ' + t('rp') + '</div>' +
           (k.hi != null ? '<div class="bar"><i style="width:' + Math.round(k.progress * 100) + '%"></i></div><div class="lg-next">' + nextLabel(p.rating) + '</div>' : '')
           : '<div class="lg-next">' + t('calibText', { n: Rank.PLACEMENT - (p.sGames || 0) }) + '</div>') +
         '</div></div>';
-      if (d) {
+      if (d && !isGlobal(p)) {
         h += '<div class="chips">' +
           '<span class="chip">' + glyph('#i-globe') + (d.world ? t('worldPos', { n: fmt(d.world) }) : t('notRanked')) + '</span>' +
           (p.cc ? '<span class="chip"><span class="fl">' + flag(p.cc) + '</span>' + (d.country ? '#' + fmt(d.country) : '—') + '</span>' : '') +
@@ -4462,7 +4521,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     },
     rankedHTML: function (p, d) {
       var wr = p.games ? Math.round(100 * p.wins / p.games) + '%' : '—';
-      var cells = [[fmt(p.games), 'stMatches'], [wr, 'stWinrate'], [fmt(p.peak), 'stPeak'], [fmt(p.bestStreak), 'stBestStreak'], [fmt(p.koWins), 'stKo'], [fmt(p.sWins), 'stSeasonWins']];
+      var cells = [[fmt(p.games), 'stMatches'], [wr, 'stWinrate'], [isGlobal(p) ? '∞' : fmt(p.peak), 'stPeak'], [fmt(p.bestStreak), 'stBestStreak'], [fmt(p.koWins), 'stKo'], [fmt(p.sWins), 'stSeasonWins']];
       var h = '<div class="grid3">' + cells.map(function (c) { return '<div class="cell-stat"><b>' + c[0] + '</b><span>' + t(c[1]) + '</span></div>'; }).join('') + '</div>';
       if (d && d.seasons && d.seasons.length) {
         h += '<h3 class="sec">' + t('seasonsTitle') + '</h3><div class="seasons">' + d.seasons.map(function (s) {
@@ -4473,11 +4532,11 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       if (!d) h += '<p class="muted">' + t('loading') + '</p>';
       else if (!d.history.length) h += '<p class="muted">' + t('noMatches') + '</p>';
       else h += '<div class="hist">' + d.history.map(function (m) {
-        var dl = m.delta || 0, gone = m.opp.id === 'deleted' || !m.opp.name;
+        var dl = m.delta, gone = m.opp.id === 'deleted' || !m.opp.name;
         return '<button class="hrow ' + m.result + '"' + (gone ? ' disabled' : ' data-pid="' + esc(m.opp.id) + '"') + '>' + (gone ? '<span class="ava ghost" style="--s:34px"></span>' : avatar(m.opp.avatar, 34)) +
           '<span class="hmid"><span class="hn">' + (gone ? t('deletedPlayer') : esc(m.opp.name) + ' <span class="fl">' + flag(m.opp.cc) + '</span>') + '</span><span class="hs"><i>' + t('res_' + m.result) + '</i> · ' +
           fmt(m.score) + ' : ' + fmt(m.oppScore) + ' · ' + ago(m.at) + '</span></span>' +
-          '<b class="hd">' + (dl > 0 ? '+' : '') + dl + '</b></button>';
+          (dl == null ? '' : '<b class="hd">' + (dl > 0 ? '+' : '') + dl + '</b>') + '</button>';
       }).join('') + '</div>';
       return h;
     },
@@ -4493,7 +4552,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         var d = I18N.ach(a.id), on = !!Profile.ach[a.id]; if (on) got++;
         return '<div class="ach' + (on ? ' got' : '') + '"><div class="ic">' + glyph(a.icon) + '</div><div><b>' + esc(d[0]) + '</b><span>' + esc(d[1]) + '</span></div></div>';
       }).join('');
-      return '<div class="ach-count">' + t('achCount', { a: got, b: Profile.ACH.length }) + '</div><div class="ach-list">' + list + '</div>';
+      var gl = Net.me && isGlobal(Net.me) ? '<div class="ach got glob-ach"><div class="ic">' + globe(40, true) + '</div><div><b>' + t('achGlobal') + '</b><span>' + t('achGlobalText') + '</span></div></div>' : '';
+      return '<div class="ach-count">' + t('achCount', { a: got + (gl ? 1 : 0), b: Profile.ACH.length + (gl ? 1 : 0) }) + '</div><div class="ach-list">' + gl + list + '</div>';
     },
 
     /* ---------- leaderboards ---------- */
@@ -4537,7 +4597,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       if (me) {
         $('tpMe').innerHTML = m && m.pos ? self.rowHTML({ pos: m.pos, id: me.id, name: me.name, cc: me.cc, avatar: me.avatar, rating: me.rating, sGames: me.sGames, badge: me.badge, badges: me.badges }, me)
           : '<div class="trow me hint">' + avatar(me.avatar, 34) + '<span class="hmid"><span class="hn">' + esc(me.name) + '</span><span class="hs">' +
-          t('mePlace', { n: Math.max(1, Rank.PLACEMENT - (me.sGames || 0)) }) + '</span></span></div>';
+          (isGlobal(me) ? t('globalTop') : t('mePlace', { n: Math.max(1, Rank.PLACEMENT - (me.sGames || 0)) })) + '</span></span></div>';
         var r = $('tpMe').querySelector('[data-pid]'); if (r) r.onclick = function () { self.openProfile(); };
       }
       this.watchMine();
@@ -4649,7 +4709,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
   };
 
   root.Social = S;
-  root.PX = { badgeList: badgeList, badgeIcons: badgeIcons, badgeInfo: badgeInfo, avatar: avatar, avatarF: avatarF, flag: flag, cname: cname, tag: tag, tierLabel: tierLabel, badge: badge, glyph: glyph, esc: esc, placed: placed,
+  root.PX = { isGlobal: isGlobal, globe: globe, badgeList: badgeList, badgeIcons: badgeIcons, badgeInfo: badgeInfo, avatar: avatar, avatarF: avatarF, flag: flag, cname: cname, tag: tag, tierLabel: tierLabel, badge: badge, glyph: glyph, esc: esc, placed: placed,
     seasonLeft: seasonLeft, nextLabel: nextLabel, badgeIcon: badgeIcon, sidText: sidText, statusText: statusText, linkInfo: linkInfo, openUrl: openUrl, ago: ago };
 })(this);
 

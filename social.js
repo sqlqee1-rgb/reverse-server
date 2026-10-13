@@ -39,6 +39,7 @@ module.exports = function createSocial(ctx) {
   function badgesOf(a) {
     if (!a) return [];
     const out = [];
+    if (isGlobal(a)) out.push({ k: 'global' });
     if (a.role === 'owner' && a.creatorOn !== false) out.push({ k: 'creator' });
     for (const x of seasonTop.get(a.id) || []) out.push({ k: 'season', s: x.s, r: x.r });
     if (a.donor > 0) out.push({ k: 'donor', t: Math.min(3, a.donor) });
@@ -54,10 +55,15 @@ module.exports = function createSocial(ctx) {
     return null;
   }
   const isOwner = (a) => !!a && a.role === 'owner';
+  // the one-of-a-kind "Global" rank: above every league, with no rating or place shown anywhere
+  const GLOBAL_SIDS = String(process.env.GLOBAL_SIDS || '429582').split(/[,\s]+/).filter(Boolean).map(Number);
+  const isGlobal = (a) => !!a && (a.rankTitle === 'global' || GLOBAL_SIDS.includes(+a.sid));
   // what other players may see about an account
   function card(a) {
     if (!a) return null;
-    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, sGames: a.sGames, badge: badgeOf(a), badges: badgesOf(a) };
+    const g = isGlobal(a);
+    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: g ? null : a.rating, sGames: g ? null : a.sGames, rank: g ? 'global' : undefined,
+      badge: badgeOf(a), badges: badgesOf(a) };
   }
   // live object for online people, the database for the rest
   async function acc(id) { const p = byAcc.get(id); return p ? p.acc : store().get(id); }
@@ -114,6 +120,7 @@ module.exports = function createSocial(ctx) {
 
   /* ---------- hello / bye ---------- */
   async function onHello(p, m) {
+    if (GLOBAL_SIDS.includes(+p.acc.sid) && p.acc.rankTitle !== 'global') { p.acc.rankTitle = 'global'; await store().patch(p.acc.id, { rankTitle: 'global' }); ctx.topChanged(); }
     if (ctx.isBoss(m.key) && !isOwner(p.acc)) {
       p.acc.role = 'owner'; await store().patch(p.acc.id, { role: 'owner' });
       await sys('admin', 'owner_new', { name: p.acc.name, sid: p.acc.sid });
@@ -356,6 +363,13 @@ module.exports = function createSocial(ctx) {
       p.acc.creatorOn = on; await store().patch(p.acc.id, { creatorOn: on }); p.send(meMsg(p)); onChange();
       return sys('admin', 'done', { act: on ? 'creator_on' : 'creator_off' });
     }
+    if (c === 'global') {
+      const t = await findTarget(ref); if (!t) return sys('admin', 'no_player', { ref: ref || '' });
+      const on = rest[0] !== 'off', f = { rankTitle: on ? 'global' : null }, lp = byAcc.get(t.id);
+      await store().patch(t.id, f); if (lp) { Object.assign(lp.acc, f); lp.send(meMsg(lp)); }
+      ctx.topChanged();
+      return sys('admin', 'done', { act: on ? 'global_on' : 'global_off', name: t.name, sid: t.sid });
+    }
     if (c === 'donatelink') {
       const u = (ref || '').trim();
       if (u && !linkOk(u)) return sys('admin', 'bad_link');
@@ -497,5 +511,5 @@ module.exports = function createSocial(ctx) {
     ctx.topChanged();
     return tier;
   }
-  return { handle, onHello, onBye, statusOf, onlineCount, card, badgeOf, badgesOf, isOwner, loadWorld, loadSeasonBadges, info, grantDonor };
+  return { isGlobal, GLOBAL_SIDS, handle, onHello, onBye, statusOf, onlineCount, card, badgeOf, badgesOf, isOwner, loadWorld, loadSeasonBadges, info, grantDonor };
 };

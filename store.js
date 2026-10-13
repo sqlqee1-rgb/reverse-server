@@ -102,18 +102,19 @@ class MemoryStore {
   async reportsBy(src, since) { return this.reps.filter((r) => r.src === src && r.at > since).length; }
   async openReportOf(src, target) { const r = this.reps.find((q) => q.src === src && q.target === target && q.state === 'open'); return r ? { ...r } : null; }
   async getMeta(k) { return this.meta.get(k) || null; }
+  async markGlobal(sids) { for (const a of this.acc.values()) if (sids.includes(a.sid) && !a.rankTitle) a.rankTitle = 'global'; }
   async seasonBadges() { return this.seasons.filter((x) => x.rank <= 100).map((x) => ({ account: x.account, season: x.season, rank: x.rank })); }
   async addPurchase(token, account, sku, source) { this.buys = this.buys || new Map(); if (this.buys.has(token)) return false; this.buys.set(token, { account, sku, source }); return true; }
   async setMeta(k, v) { this.meta.set(k, String(v)); }
   async pairCount(x, y, since) { return this.matches.filter((m) => m.at > since && ((m.a === x && m.b === y) || (m.a === y && m.b === x))).length; }
   _board(season, cc) {
     const now = Date.now();
-    return [...this.acc.values()].filter((a) => a.season === season && a.sGames >= R.PLACEMENT && (!cc || a.cc === cc) && !(a.bannedUntil > now))
+    return [...this.acc.values()].filter((a) => a.season === season && a.sGames >= R.PLACEMENT && (!cc || a.cc === cc) && !(a.bannedUntil > now) && !a.rankTitle)
       .sort((p, q) => q.rating - p.rating || q.sWins - p.sWins || p.createdAt - q.createdAt);
   }
   async top(season, cc, limit) { return this._board(season, cc).slice(0, limit).map((a) => ({ ...a })); }
   async position(acc, cc) {
-    if (acc.sGames < R.PLACEMENT) return null;
+    if (acc.sGames < R.PLACEMENT || acc.rankTitle) return null;
     const i = this._board(acc.season, cc).findIndex((a) => a.id === acc.id); return i < 0 ? null : i + 1;
   }
   async history(id, limit) { return this.matches.filter((m) => m.a === id || m.b === id).sort((p, q) => q.at - p.at).slice(0, limit); }
@@ -150,7 +151,7 @@ const COLS = {
   rating: 'rating', peak: 'peak', games: 'games', wins: 'wins', losses: 'losses', draws: 'draws', koWins: 'ko_wins',
   streak: 'streak', bestStreak: 'best_streak', season: 'season', sGames: 's_games', sWins: 's_wins', sPeak: 's_peak',
   sid: 'sid', role: 'role', badge: 'badge', link: 'link', creatorOn: 'creator_on', bannedUntil: 'banned_until', banReason: 'ban_reason',
-  mutedUntil: 'muted_until', lastSeen: 'last_seen', donor: 'donor',
+  mutedUntil: 'muted_until', lastSeen: 'last_seen', donor: 'donor', rankTitle: 'rank_title',
 };
 const TIMES = new Set(['ccChangedAt', 'bannedUntil', 'mutedUntil', 'lastSeen']);
 const SELECT = Object.entries(COLS).map(([k, c]) => (c === k ? c : `${c} AS "${k}"`)).join(', ');
@@ -207,6 +208,7 @@ class PgStore {
         reason TEXT NOT NULL, comment TEXT, context TEXT, state TEXT NOT NULL DEFAULT 'open', action TEXT, msg BIGINT);
       CREATE INDEX IF NOT EXISTS reports_target ON reports (target);
       ALTER TABLE accounts ADD COLUMN IF NOT EXISTS donor INT NOT NULL DEFAULT 0;
+      ALTER TABLE accounts ADD COLUMN IF NOT EXISTS rank_title TEXT;
       CREATE TABLE IF NOT EXISTS purchases (token TEXT PRIMARY KEY, account TEXT NOT NULL, sku TEXT NOT NULL, at TIMESTAMPTZ NOT NULL DEFAULT now(), source TEXT NOT NULL);`);
     // accounts made before short ids existed get one now
     const missing = (await this.q(`SELECT id FROM accounts WHERE sid IS NULL`)).rows;
@@ -263,13 +265,14 @@ class PgStore {
   }
   async top(season, cc, limit) {
     const r = await this.q(`SELECT ${SELECT} FROM accounts WHERE season = $1 AND s_games >= ${R.PLACEMENT} ${cc ? 'AND cc = $3' : ''}
-      AND (banned_until IS NULL OR banned_until < now()) ORDER BY rating DESC, s_wins DESC, created_at ASC LIMIT $2`, cc ? [season, limit, cc] : [season, limit]);
+      AND (banned_until IS NULL OR banned_until < now()) AND rank_title IS NULL ORDER BY rating DESC, s_wins DESC, created_at ASC LIMIT $2`, cc ? [season, limit, cc] : [season, limit]);
     return r.rows.map(fix);
   }
   async position(acc, cc) {
     if (acc.sGames < R.PLACEMENT) return null;
+    if (acc.rankTitle) return null;
     const r = await this.q(`SELECT count(*)::int AS n FROM accounts WHERE season = $1 AND s_games >= ${R.PLACEMENT} ${cc ? 'AND cc = $5' : ''}
-      AND (banned_until IS NULL OR banned_until < now())
+      AND (banned_until IS NULL OR banned_until < now()) AND rank_title IS NULL
       AND (rating > $2 OR (rating = $2 AND (s_wins > $3 OR (s_wins = $3 AND created_at < $4))))`,
     cc ? [acc.season, acc.rating, acc.sWins, new Date(acc.createdAt), cc] : [acc.season, acc.rating, acc.sWins, new Date(acc.createdAt)]);
     return r.rows[0].n + 1;
@@ -289,7 +292,7 @@ class PgStore {
     for (const s of old) {
       await this.q(`INSERT INTO season_results (account, season, rating, peak, rank)
         SELECT id, season, rating, s_peak, row_number() OVER (ORDER BY rating DESC, s_wins DESC, created_at ASC)
-        FROM accounts WHERE season = $1 AND s_games >= ${R.PLACEMENT} ON CONFLICT DO NOTHING`, [s]);
+        FROM accounts WHERE season = $1 AND s_games >= ${R.PLACEMENT} AND rank_title IS NULL ON CONFLICT DO NOTHING`, [s]);
       await this.q(`UPDATE accounts SET rating = round(${R.START} + (rating - ${R.START}) * 0.6), season = $2, s_games = 0, s_wins = 0,
         s_peak = round(${R.START} + (rating - ${R.START}) * 0.6) WHERE season = $1`, [s, season]);
     }
@@ -358,6 +361,7 @@ class PgStore {
   async openReportOf(src, target) { return this._rep((await this.q(`SELECT * FROM reports WHERE src = $1 AND target = $2 AND state = 'open' LIMIT 1`, [src, target])).rows[0]) || null; }
   async getMeta(k) { const r = await this.q(`SELECT v FROM meta WHERE k = $1`, [k]); return r.rows[0] ? r.rows[0].v : null; }
   // season placements that earn a badge (top 100 of the world)
+  async markGlobal(sids) { if (sids.length) await this.q(`UPDATE accounts SET rank_title = 'global' WHERE sid = ANY($1) AND rank_title IS NULL`, [sids]); }
   async seasonBadges() { return (await this.q(`SELECT account, season, rank FROM season_results WHERE rank <= 100`)).rows; }
   async addPurchase(token, account, sku, source) {
     const r = await this.q(`INSERT INTO purchases (token, account, sku, source) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`, [token, account, sku, source]);

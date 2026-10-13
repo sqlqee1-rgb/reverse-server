@@ -231,6 +231,12 @@ async function startBoth(a, b) {
   assert.ok(dme.badges.some((b) => b.k === 'donor' && b.t === 3) && dme.badges.some((b) => b.k === 'inf'));
   own.send({ type: 'say', to: 'admin', text: '/donatelink https://boosty.to/reverse' }); await sleep(300);
   u1.send({ type: 'shop' }); assert.strictEqual((await u1.next('shop')).donateUrl, 'https://boosty.to/reverse');
+  // the Global rank: one of a kind, no rating or place shown anywhere, and never in the leaderboards
+  u1.drop('me'); own.send({ type: 'say', to: 'admin', text: '/global ' + u1.me.sid + ' on' });
+  const gme = (await u1.next('me')).me; assert.strictEqual(gme.rank, 'global'); assert.strictEqual(gme.rating, null); assert.ok(gme.badges.some((b) => b.k === 'global'));
+  u2.drop('profile'); u2.send({ type: 'profile', id: u1.me.id }); const gp = await u2.next('profile');
+  assert.strictEqual(gp.p.rank, 'global'); assert.strictEqual(gp.p.rating, null); assert.strictEqual(gp.world, null);
+  u1.send({ type: 'top', scope: 'world' }); const gt = await u1.next('top'); assert.ok(!gt.list.some((x) => x.id === u1.me.id)); assert.strictEqual(gt.me.pos, null);
   const hz = await (await fetch(`http://127.0.0.1:${PORT}/healthz`)).json(); assert.ok(hz.online >= hz.players);
   console.log('social ok: ids', u1.me.sid, u2.me.sid, '| online', hz.online, 'players', hz.players);
 

@@ -88,8 +88,9 @@ class Player {
   card() {
     if (this.bot && !this.acc) return { bot: true, name: 'bot', avatar: this.avatar || 0 };
     const a = this.acc;
-    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, sGames: a.sGames, games: a.games, wins: a.wins, streak: a.streak,
-      badge: social.badgeOf(a), badges: social.badgesOf(a) };
+    const g = social.isGlobal(a);
+    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: g ? null : a.rating, sGames: g ? null : a.sGames, rank: g ? 'global' : undefined,
+      games: a.games, wins: a.wins, streak: a.streak, badge: social.badgeOf(a), badges: social.badgesOf(a) };
   }
   send(o) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(o)); }
   get online() { return this.bot || (this.ws && this.ws.readyState === 1); }
@@ -211,7 +212,7 @@ class Match {
     return { type: 'end', ranked: this.ranked, result: w === -1 ? 'draw' : (w === side ? 'win' : 'lose'), reason: this.result.reason,
       you: { score: this.st[side].score, max: this.st[side].maxTile, sent: this.sent[side] },
       opp: { score: this.st[1 - side].score, max: this.st[1 - side].maxTile, sent: this.sent[1 - side] }, rematch: this.ranked ? 0 : REMATCH_WINDOW,
-      rating: this.rating ? this.rating[side] : null };
+      rating: this.rating && !social.isGlobal(this.p[side].acc) ? this.rating[side] : null, global: social.isGlobal(this.p[side].acc) || undefined };
   }
   close() {
     clearTimeout(this.closeTimer); clearTimeout(this.timer); clearTimeout(this.botTimer);
@@ -269,6 +270,13 @@ function freeUp(p) { if (p.match) p.match.leave(p); removeFromQueue(p); closeRoo
 
 function meMsg(p) {
   const a = p.acc;
+  if (social.isGlobal(a)) {   // the Global rank hides its own rating too
+    const m = meMsgRaw(p); Object.assign(m.me, { rating: null, peak: null, sPeak: null, rank: 'global' }); return m;
+  }
+  return meMsgRaw(p);
+}
+function meMsgRaw(p) {
+  const a = p.acc;
   return { type: 'me', season: { id: season, n: R.seasonNumber(season), ends: R.seasonEnd(season) },
     me: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, ccChangedAt: a.ccChangedAt, avatar: a.avatar, rating: a.rating, peak: a.peak, games: a.games,
       wins: a.wins, losses: a.losses, draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak,
@@ -323,7 +331,7 @@ const topCache = new Map();
 async function topList(cc) {
   const key = season + ':' + (cc || '*'), hit = topCache.get(key);
   if (hit && now() - hit.t < 15000) return hit.list;
-  const list = (await store.top(season, cc, 100)).map((a, i) => ({ pos: i + 1, id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar,
+  const list = (await store.top(season, cc, 100)).filter((a) => !social.isGlobal(a)).map((a, i) => ({ pos: i + 1, id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar,
     rating: a.rating, sGames: a.sGames, sWins: a.sWins, badge: social.badgeOf(a), badges: social.badgesOf(a) }));
   topCache.set(key, { t: now(), list });
   return list;
@@ -331,18 +339,20 @@ async function topList(cc) {
 async function profileOf(id) {
   const a = await store.get(id);
   if (!a) return null;
-  const [world, country, history, seasons] = await Promise.all([store.position(a, null), a.cc ? store.position(a, a.cc) : null,
+  const g = social.isGlobal(a);
+  const [world, country, history, seasons] = await Promise.all([g ? null : store.position(a, null), a.cc && !g ? store.position(a, a.cc) : null,
     store.history(a.id, 15), store.seasonsOf(a.id)]);
+  const hidden = new Set((await store.getMany([...new Set(history.flatMap((m) => [m.a, m.b]))])).filter((x) => social.isGlobal(x)).map((x) => x.id));
   return {
-    p: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, peak: a.peak, games: a.games, wins: a.wins, losses: a.losses,
-      draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak, sGames: a.sGames, sWins: a.sWins, sPeak: a.sPeak, createdAt: a.createdAt,
+    p: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: g ? null : a.rating, peak: g ? null : a.peak, rank: g ? 'global' : undefined, games: a.games, wins: a.wins, losses: a.losses,
+      draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak, sGames: g ? null : a.sGames, sWins: a.sWins, sPeak: g ? null : a.sPeak, createdAt: a.createdAt,
       badge: social.badgeOf(a), badges: social.badgesOf(a), link: a.badge === 'inf' || social.isOwner(a) ? a.link || null : null, status: social.statusOf(byAcc.get(a.id) ? byAcc.get(a.id).acc : a) },
     world, country, seasons,
     history: history.map((m) => {
       const me = m.a === a.id ? 'a' : 'b', op = me === 'a' ? 'b' : 'a', side = me === 'a' ? 0 : 1;
       return { at: m.at, reason: m.reason, result: m.winner === -1 ? 'draw' : m.winner === side ? 'win' : 'lose',
-        score: m[me + 'Score'], oppScore: m[op + 'Score'], delta: m[me + 'Delta'], rating: m[me + 'Rating'],
-        opp: { id: m[op], name: m[op + 'Name'], cc: m[op + 'Cc'], avatar: m[op + 'Avatar'], rating: m[op + 'Rating'] } };
+        score: m[me + 'Score'], oppScore: m[op + 'Score'], delta: g ? null : m[me + 'Delta'], rating: g ? null : m[me + 'Rating'],
+        opp: { id: m[op], name: m[op + 'Name'], cc: m[op + 'Cc'], avatar: m[op + 'Avatar'], rating: hidden.has(m[op]) ? null : m[op + 'Rating'], rank: hidden.has(m[op]) ? 'global' : undefined } };
     }),
   };
 }
@@ -398,9 +408,10 @@ async function handle(p, m) {
     case 'top': {
       const cc = m.scope === 'country' ? String(m.cc || p.acc.cc || '').toUpperCase().slice(0, 2) : null;
       if (m.scope === 'country' && !cc) return p.send({ type: 'top', scope: 'country', cc: null, list: [], me: null });
-      const [list, pos] = await Promise.all([topList(cc), store.position(p.acc, cc)]);
+      const g = social.isGlobal(p.acc);
+      const [list, pos] = await Promise.all([topList(cc), g ? null : store.position(p.acc, cc)]);
       p.send({ type: 'top', scope: cc ? 'country' : 'world', cc, season: { id: season, n: R.seasonNumber(season), ends: R.seasonEnd(season) },
-        list, me: { pos, rating: p.acc.rating, sGames: p.acc.sGames } });
+        list, me: { pos, rating: g ? null : p.acc.rating, sGames: g ? null : p.acc.sGames, rank: g ? 'global' : undefined } });
       return;
     }
     case 'delete_account': {
@@ -672,7 +683,7 @@ setInterval(() => { bots.catchUp().then((n) => { if (n) topCache.clear(); }); },
 setInterval(() => { if (R.seasonId() !== season) ensureSeason().catch((e) => console.error('season rollover failed', e)); }, 60000);
 
 // if the database is unreachable (expired free plan, wrong URL) the game still runs on the in-memory store
-const ready = store.init().catch((e) => {
+const ready = store.init().then(() => store.markGlobal(social.GLOBAL_SIDS)).catch((e) => {
   console.error('DATABASE UNAVAILABLE, running on memory store (ratings will not persist):', e.message);
   store = Store.create(null);
   return store.init();
