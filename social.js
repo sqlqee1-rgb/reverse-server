@@ -28,12 +28,36 @@ module.exports = function createSocial(ctx) {
   const challenges = new Map();         // cid -> { from: Player, to: Player, timer }
 
   /* ---------- who is who ---------- */
-  function badgeOf(a) { return a && a.role === 'owner' && a.creatorOn !== false ? 'creator' : a && a.badge === 'inf' ? 'inf' : null; }
+  /* badges: Creator (owner), Supporter tiers (donations), Influencer (given by the owner), season top places (earned at the season end) */
+  let seasonTop = new Map();            // account -> [{ s, r }] best first
+  async function loadSeasonBadges() {
+    const m = new Map();
+    for (const x of await store().seasonBadges()) { const l = m.get(x.account) || []; l.push({ s: x.season, r: +x.rank }); m.set(x.account, l); }
+    for (const l of m.values()) l.sort((p, q) => p.r - q.r || (p.s < q.s ? 1 : -1));
+    seasonTop = m;
+  }
+  function badgesOf(a) {
+    if (!a) return [];
+    const out = [];
+    if (a.role === 'owner' && a.creatorOn !== false) out.push({ k: 'creator' });
+    for (const x of seasonTop.get(a.id) || []) out.push({ k: 'season', s: x.s, r: x.r });
+    if (a.donor > 0) out.push({ k: 'donor', t: Math.min(3, a.donor) });
+    if (a.badge === 'inf') out.push({ k: 'inf' });
+    return out;
+  }
+  // the badge that styles the name and the avatar frame
+  function badgeOf(a) {
+    if (!a) return null;
+    if (a.role === 'owner' && a.creatorOn !== false) return 'creator';
+    if (a.donor >= 3) return 'donor';
+    if (a.badge === 'inf') return 'inf';
+    return null;
+  }
   const isOwner = (a) => !!a && a.role === 'owner';
   // what other players may see about an account
   function card(a) {
     if (!a) return null;
-    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, sGames: a.sGames, badge: badgeOf(a) };
+    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, sGames: a.sGames, badge: badgeOf(a), badges: badgesOf(a) };
   }
   // live object for online people, the database for the rest
   async function acc(id) { const p = byAcc.get(id); return p ? p.acc : store().get(id); }
@@ -278,7 +302,7 @@ module.exports = function createSocial(ctx) {
   }
   // what the owner sees about a player: the public card plus moderation state
   function info(a, stats) {
-    return { ...card(a), bot: bots.isBot(a.id), games: a.games, wins: a.wins, created: a.createdAt, link: a.link || null, rawBadge: a.badge || null,
+    return { ...card(a), bot: bots.isBot(a.id), games: a.games, wins: a.wins, created: a.createdAt, link: a.link || null, rawBadge: a.badge || null, donor: a.donor || 0,
       bannedUntil: a.bannedUntil > now() ? a.bannedUntil : null, mutedUntil: a.mutedUntil > now() ? a.mutedUntil : null,
       reports: stats || null, status: statusOf(a) };
   }
@@ -332,7 +356,14 @@ module.exports = function createSocial(ctx) {
       p.acc.creatorOn = on; await store().patch(p.acc.id, { creatorOn: on }); p.send(meMsg(p)); onChange();
       return sys('admin', 'done', { act: on ? 'creator_on' : 'creator_off' });
     }
-    const map = { info: 'info', badge: 'badge', unbadge: 'unbadge', link: 'link', ban: 'ban', unban: 'unban', mute: 'mute', unmute: 'unmute', rename: 'rename', untop: 'untop' };
+    if (c === 'donatelink') {
+      const u = (ref || '').trim();
+      if (u && !linkOk(u)) return sys('admin', 'bad_link');
+      await store().setMeta('donate_url', u); ctx.shopChanged();
+      return sys('admin', 'done', { act: u ? 'donatelink' : 'donatelink_off' });
+    }
+    const map = { info: 'info', badge: 'badge', unbadge: 'unbadge', link: 'link', ban: 'ban', unban: 'unban', mute: 'mute', unmute: 'unmute', rename: 'rename', untop: 'untop',
+      donor: 'donor', undonor: 'undonor' };
     if (!map[c]) return sys('admin', 'unknown', { cmd: c });
     const t = await findTarget(ref);
     if (!t) return sys('admin', 'no_player', { ref: ref || '' });
@@ -341,6 +372,7 @@ module.exports = function createSocial(ctx) {
     if (c === 'badge' || c === 'link') { extra = rest.join(' '); dur = null; }
     if (c === 'ban' && !BAN_DUR.includes(dur)) return sys('admin', 'usage', { cmd: 'ban' });
     if (c === 'mute' && !MUTE_DUR.includes(dur)) return sys('admin', 'usage', { cmd: 'mute' });
+    if (c === 'donor' && !['1', '2', '3'].includes(dur)) return sys('admin', 'usage', { cmd: 'donor' });
     return act(p, { act: c, target: t.id, dur, extra });
   }
   async function postInfo(t) {
@@ -383,6 +415,11 @@ module.exports = function createSocial(ctx) {
         await set({ badge: 'inf', link }); await sys(a.id, 'badge'); ctx.topChanged(); break;
       }
       case 'unbadge': await set({ badge: null }); await sys(a.id, 'unbadge'); ctx.topChanged(); break;
+      case 'donor': {
+        const t = Math.max(a.donor || 0, Math.min(3, +m.dur || 1));
+        await set({ donor: t }); await sys(a.id, 'donor', { t }); note = { t }; ctx.topChanged(); break;
+      }
+      case 'undonor': await set({ donor: 0 }); ctx.topChanged(); break;
       case 'link': {
         if (m.extra && !linkOk(m.extra)) return sys('admin', 'bad_link');
         await set({ link: m.extra || null }); break;
@@ -449,5 +486,16 @@ module.exports = function createSocial(ctx) {
   }
 
   setInterval(() => { store().prune().catch(() => { }); }, 3600e3);
-  return { handle, onHello, onBye, statusOf, onlineCount, card, badgeOf, isOwner, loadWorld, info };
+  // a paid tier was confirmed (Google Play or a manual grant): raise the account's supporter tier and thank them
+  async function grantDonor(id, t, source) {
+    const a = await acc(id); if (!a) return null;
+    const tier = Math.max(a.donor || 0, Math.min(3, t)), lp = byAcc.get(id);
+    a.donor = tier; if (lp) { lp.acc.donor = tier; lp.send(meMsg(lp)); }
+    await store().patch(id, { donor: tier });
+    await sys(id, 'donor', { t: tier });
+    await sys('admin', 'donation', { name: a.name, sid: a.sid, t, source });
+    ctx.topChanged();
+    return tier;
+  }
+  return { handle, onHello, onBye, statusOf, onlineCount, card, badgeOf, badgesOf, isOwner, loadWorld, loadSeasonBadges, info, grantDonor };
 };

@@ -223,6 +223,14 @@ async function startBoth(a, b) {
   own.send({ type: 'say', to: 'admin', text: '/creator on' });
   u2.send({ type: 'block', id: u1.me.id }); await u2.next('blocked');
   await sleep(1300); u1.send({ type: 'say', to: u2.me.id, text: 'hey' }); const ew = await u1.next('error'); assert.ok(['cant_write', 'muted', 'not_friend'].includes(ew.code));
+  // supporter badges: the shop lists three tiers, Google Play tokens are only trusted after a server check, the owner can grant
+  u1.send({ type: 'shop' }); const sh = await u1.next('shop'); assert.strictEqual(sh.products.length, 3);
+  u1.send({ type: 'purchase', sku: 'support_2', token: 'fake-token' }); const pu = await u1.next('purchase'); assert.ok(!pu.ok);
+  u2.drop('me'); own.send({ type: 'say', to: 'admin', text: '/donor ' + u2.me.sid + ' 3' });
+  const dme = (await u2.next('me')).me; assert.strictEqual(dme.donor, 3); assert.strictEqual(dme.badge, 'donor');
+  assert.ok(dme.badges.some((b) => b.k === 'donor' && b.t === 3) && dme.badges.some((b) => b.k === 'inf'));
+  own.send({ type: 'say', to: 'admin', text: '/donatelink https://boosty.to/reverse' }); await sleep(300);
+  u1.send({ type: 'shop' }); assert.strictEqual((await u1.next('shop')).donateUrl, 'https://boosty.to/reverse');
   const hz = await (await fetch(`http://127.0.0.1:${PORT}/healthz`)).json(); assert.ok(hz.online >= hz.players);
   console.log('social ok: ids', u1.me.sid, u2.me.sid, '| online', hz.online, 'players', hz.players);
 
@@ -252,7 +260,9 @@ async function startBoth(a, b) {
   const after = await store.get(A.me.id), seasons = await store.seasonsOf(A.me.id);
   const bobSeason = (await store.seasonsOf(b.me.id))[0];
   assert.strictEqual(after.rating, R.softReset(before)); assert.strictEqual(after.sGames, 0); assert.ok(seasons[0].rank > bobSeason.rank);
-  console.log('season rollover ok:', before, '->', after.rating, 'archived rank', seasons[0].rank);
+  await srv.social.loadSeasonBadges();
+  const sb = srv.social.badgesOf(after).find((b) => b.k === 'season'); assert.ok(sb && sb.r === seasons[0].rank, 'top-100 places earn a season badge');
+  console.log('season rollover ok:', before, '->', after.rating, 'archived rank', seasons[0].rank, '+ badge');
 
   const h = await (await fetch(`http://127.0.0.1:${PORT}/healthz`)).json();
   console.log('healthz', JSON.stringify(h));

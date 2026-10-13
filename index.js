@@ -20,6 +20,7 @@ const R = (() => { try { return require('./rank.js'); } catch (e) { return requi
 const Store = require('./store.js');
 const BotsLib = require('./bots.js');
 const createSocial = require('./social.js');
+const Pay = require('./payments.js');
 let store = Store.create(process.env.DATABASE_URL);
 let geo = null; try { geo = require('geoip-country'); } catch (e) { console.log('geoip-country not installed'); }
 let COUNTRIES = null; try { COUNTRIES = new Set(Object.keys(require('countries-list').countries)); } catch (e) { }
@@ -46,6 +47,7 @@ const byAcc = new Map();      // account id -> Player (one live seat per account
 let queue = [];               // casual: first come, first served
 let ranked = [];              // ranked: { p, since }, paired by rating with a widening window
 let season = R.seasonId();
+let shopCache = null;
 const bots = new BotsLib.Bots(store, () => season);
 
 const startedAt = Date.now();
@@ -66,7 +68,7 @@ const social = createSocial({
   store: () => store,
   busy: (p) => busy(p), freeUp: (p) => freeUp(p), meMsg: (p) => meMsg(p), inQueue: (p) => inQueue(p),
   newMatch: (a, b) => new Match(a, b),
-  onChange: () => topCache.clear(), topChanged: () => topCache.clear(),
+  onChange: () => topCache.clear(), topChanged: () => topCache.clear(), shopChanged: () => { shopCache = null; },
 });
 function mulberry(seed) {
   let a = seed >>> 0;
@@ -87,7 +89,7 @@ class Player {
     if (this.bot && !this.acc) return { bot: true, name: 'bot', avatar: this.avatar || 0 };
     const a = this.acc;
     return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, sGames: a.sGames, games: a.games, wins: a.wins, streak: a.streak,
-      badge: social.badgeOf(a) };
+      badge: social.badgeOf(a), badges: social.badgesOf(a) };
   }
   send(o) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(o)); }
   get online() { return this.bot || (this.ws && this.ws.readyState === 1); }
@@ -270,7 +272,7 @@ function meMsg(p) {
   return { type: 'me', season: { id: season, n: R.seasonNumber(season), ends: R.seasonEnd(season) },
     me: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, ccChangedAt: a.ccChangedAt, avatar: a.avatar, rating: a.rating, peak: a.peak, games: a.games,
       wins: a.wins, losses: a.losses, draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak,
-      sGames: a.sGames, sWins: a.sWins, sPeak: a.sPeak, badge: social.badgeOf(a), owner: social.isOwner(a), creatorOn: a.creatorOn !== false, link: a.link || null,
+      sGames: a.sGames, sWins: a.sWins, sPeak: a.sPeak, badge: social.badgeOf(a), badges: social.badgesOf(a), donor: a.donor || 0, owner: social.isOwner(a), creatorOn: a.creatorOn !== false, link: a.link || null,
       bannedUntil: a.bannedUntil > now() ? a.bannedUntil : null, mutedUntil: a.mutedUntil > now() ? a.mutedUntil : null } };
 }
 
@@ -322,7 +324,7 @@ async function topList(cc) {
   const key = season + ':' + (cc || '*'), hit = topCache.get(key);
   if (hit && now() - hit.t < 15000) return hit.list;
   const list = (await store.top(season, cc, 100)).map((a, i) => ({ pos: i + 1, id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar,
-    rating: a.rating, sGames: a.sGames, sWins: a.sWins, badge: social.badgeOf(a) }));
+    rating: a.rating, sGames: a.sGames, sWins: a.sWins, badge: social.badgeOf(a), badges: social.badgesOf(a) }));
   topCache.set(key, { t: now(), list });
   return list;
 }
@@ -334,7 +336,7 @@ async function profileOf(id) {
   return {
     p: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, peak: a.peak, games: a.games, wins: a.wins, losses: a.losses,
       draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak, sGames: a.sGames, sWins: a.sWins, sPeak: a.sPeak, createdAt: a.createdAt,
-      badge: social.badgeOf(a), link: social.badgeOf(a) ? a.link || null : null, status: social.statusOf(byAcc.get(a.id) ? byAcc.get(a.id).acc : a) },
+      badge: social.badgeOf(a), badges: social.badgesOf(a), link: a.badge === 'inf' || social.isOwner(a) ? a.link || null : null, status: social.statusOf(byAcc.get(a.id) ? byAcc.get(a.id).acc : a) },
     world, country, seasons,
     history: history.map((m) => {
       const me = m.a === a.id ? 'a' : 'b', op = me === 'a' ? 'b' : 'a', side = me === 'a' ? 0 : 1;
@@ -406,6 +408,22 @@ async function handle(p, m) {
       await deleteAccount(p.acc.id);
       return;
     }
+    case 'shop': {
+      if (!shopCache) shopCache = { url: await store.getMeta('donate_url') };
+      p.send({ type: 'shop', products: Pay.PRODUCTS, donateUrl: shopCache.url || null, play: Pay.configured(), tier: p.acc.donor || 0 });
+      return;
+    }
+    case 'purchase': {
+      const prod = Pay.PRODUCTS.find((x) => x.sku === m.sku), tok = String(m.token || '');
+      if (!prod || !tok) return p.send({ type: 'purchase', ok: false, sku: m.sku, reason: 'bad' });
+      try {
+        const v = await Pay.verifyPlay(prod.sku, tok);
+        if (!v.ok) return p.send({ type: 'purchase', ok: false, sku: prod.sku, reason: v.reason });
+        if (await store.addPurchase(tok, p.acc.id, prod.sku, 'play')) await social.grantDonor(p.acc.id, prod.tier, 'Google Play');
+        p.send({ type: 'purchase', ok: true, sku: prod.sku, tier: p.acc.donor || prod.tier });
+      } catch (e) { console.error('purchase check failed', e.message); p.send({ type: 'purchase', ok: false, sku: prod.sku, reason: 'server' }); }
+      return;
+    }
     case 'profile': {
       const id = String(m.id || p.acc.id);
       if (id === p.acc.id) await flush(p);
@@ -453,6 +471,7 @@ function ensureSeason() {
     if (n || cur !== season) {
       season = cur; topCache.clear();
       await bots.reload();
+      await social.loadSeasonBadges();
       for (const p of players.values()) if (p.acc) { await flush(p); p.send(meMsg(p)); }
       console.log('season', cur, n ? '(rolled over ' + n + ')' : '');
     }
@@ -661,7 +680,7 @@ const ready = store.init().catch((e) => {
   console.log(`reverse duel server on :${PORT}, ${store.kind} store, season ${season}`); res();
 }))).catch((e) => { console.error('startup failed', e); process.exit(1); });
 // bots come up right after: players can already connect while missed background games are filled in
-const botsReady = ready.then(() => bots.init()).then(() => { topCache.clear(); return social.loadWorld(); }).catch((e) => console.error('bots failed to start', e));
+const botsReady = ready.then(() => bots.init()).then(() => { topCache.clear(); return Promise.all([social.loadWorld(), social.loadSeasonBadges()]); }).catch((e) => console.error('bots failed to start', e));
 process.on('SIGTERM', () => { wss.clients.forEach((ws) => ws.close(1012, 'restart')); server.close(() => process.exit(0)); });
 
-module.exports = { server, wss, ready, botsReady, bots, get store() { return store; } };
+module.exports = { server, wss, ready, botsReady, bots, social, get store() { return store; } };

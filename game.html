@@ -533,7 +533,7 @@ html.standalone .install-tip{display:none !important}
 .me-card{width:min(100%,420px);display:flex;align-items:center;gap:14px;padding:14px;border-radius:20px;background:var(--p1);box-shadow:0 4px 0 var(--lip);text-align:left}
 .me-card:active{transform:translateY(3px);box-shadow:0 1px 0 var(--lip)}
 .mc-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
-.mc-name{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-name{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;min-width:0}
 .mc-tier{font-size:14px;color:var(--t1,var(--mute));font-weight:700}
 .mc-tier b{font-family:var(--display);font-weight:900;color:var(--ink)}
 .mc-sub{font-size:13px;color:var(--mute)}
@@ -780,8 +780,8 @@ html.standalone .install-tip{display:none !important}
 .bdg{flex:none;display:inline-block;vertical-align:middle}
 .bdg .shine{animation:shine 3.4s ease-in-out infinite}
 @keyframes shine{0%{transform:translateX(0)}55%,100%{transform:translateX(56px)}}
-.bdg.creator.big .r1,.bdg.creator.big .r2{transform-origin:16px 16px;animation:spin 7s linear infinite}
-.bdg.creator.big .r2{animation-direction:reverse;animation-duration:5s}
+.bdg.k-creator.big .r1,.bdg.k-creator.big .r2{transform-origin:16px 16px;animation:spin 7s linear infinite}
+.bdg.k-creator.big .r2{animation-direction:reverse;animation-duration:5s}
 .n-inf{background:linear-gradient(90deg,#ff6fb5,#ffa36b 55%,#ffd166);-webkit-background-clip:text;background-clip:text;color:transparent}
 .n-creator{color:var(--core)}
 .ptag .bdg{margin-left:-1px}
@@ -962,7 +962,87 @@ html.standalone .install-tip{display:none !important}
 .cg-time{position:absolute;bottom:2px;right:4px;min-width:32px;height:32px;padding:0 6px;border-radius:16px;background:var(--p2);font-family:var(--display);font-weight:900;font-size:14px;
   display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px var(--p1)}
 #ovChallenge h2{text-align:center} #ovChallenge p{text-align:center}
-@media (prefers-reduced-motion:reduce){.afr::before,.bdg .shine,.bdg.creator.big .r1,.bdg.creator.big .r2{animation:none}}
+@media (prefers-reduced-motion:reduce){.afr::before,.bdg .shine,.bdg.k-creator.big .r1,.bdg.k-creator.big .r2{animation:none}}
+
+/* ======================= v1.4: badges everywhere, badge stand, supporter shop ======================= */
+/* menu: my chip and the shop */
+.menu-bar{width:min(100%,420px);display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.me-chip{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;border-radius:16px;background:var(--p1);box-shadow:0 3px 0 var(--lip);text-align:left}
+.me-chip:active{transform:translateY(2px);box-shadow:0 1px 0 var(--lip)}
+.mch{min-width:0;display:flex;flex-direction:column;gap:2px}
+.mch b{font-size:14px;display:flex;min-width:0}
+.mch small{font-size:12px;color:var(--mute);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shop-btn{flex:none;height:46px;padding:0 14px 0 12px;border-radius:16px;display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;color:#fff;
+  background:linear-gradient(180deg,#ff6f91,#e8436c);box-shadow:0 3px 0 #9c1f3a}
+.shop-btn svg{width:20px;height:20px;color:#fff;filter:drop-shadow(0 1px 0 #0003)}
+.shop-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #9c1f3a}
+.ptag .bdg+.bdg{margin-left:-2px}
+/* donor and season badge motion */
+.bdg.k-donor.t3 .halo{transform-origin:16px 16px;animation:halo 2.6s ease-in-out infinite}
+@keyframes halo{50%{transform:scale(.82);opacity:.6}}
+.bdg.big.k-donor .shine,.bdg.big.k-season .shine{animation:shine 3.2s ease-in-out infinite}
+.n-donor{background:linear-gradient(90deg,#ffe9a3,#ffc84a 55%,#ff9a1f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.afr.donor::before{background:conic-gradient(from var(--fa),#fff1b8,#ffc84a,#ff9a1f,#ffe08a,#fff1b8)}
+.pf-badge.donor{background:#ffc84a26;color:#ffd98a}
+.bdg[data-b]{cursor:pointer}
+
+/* the badge stand in a profile */
+.stand{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.bslot{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px 10px;border-radius:18px;background:var(--p1);box-shadow:0 3px 0 var(--lip);min-width:0}
+.bslot .ped{position:relative;width:70px;height:70px;display:flex;align-items:center;justify-content:center;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%,#3a2a7a,#1b1342 70%);box-shadow:inset 0 -4px 0 #0004,0 0 0 2px #ffffff10}
+.bslot .bl{font-size:12px;font-weight:700;text-align:center;line-height:1.25;color:#e6defc;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.bslot.locked .ped svg{filter:grayscale(1) brightness(.45);opacity:.7}
+.bslot.locked .ped::after{content:"";position:absolute;right:4px;bottom:4px;width:20px;height:20px;border-radius:50%;background:var(--p2) center/12px no-repeat;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 11V8a5 5 0 0 1 10 0v3' fill='none' stroke='%23b9afe0' stroke-width='2.6'/%3E%3Crect x='5' y='11' width='14' height='10' rx='2.5' fill='%23b9afe0'/%3E%3C/svg%3E")}
+.bslot.locked .bl{color:var(--mute)}
+.bslot:active{transform:translateY(2px);box-shadow:0 1px 0 var(--lip)}
+
+/* the badge sheet */
+#ovBadge .sheet{position:relative;text-align:center;padding-top:30px}
+.bg-x{position:absolute;right:14px;top:14px}
+.bg-art{position:relative;width:170px;height:170px;margin:0 auto 6px;display:flex;align-items:center;justify-content:center}
+.bg-art .bdg{position:relative;filter:drop-shadow(0 14px 22px #0008)}
+.overlay.on .bg-art .bdg{animation:bgPop .6s var(--spring) both}
+@keyframes bgPop{from{transform:scale(.3) rotate(-25deg);opacity:0}}
+.bg-glow{position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,#ffffff30,transparent 65%)}
+.bg-glow.k-donor{background:radial-gradient(circle,#ff6f9140,transparent 65%)}
+.bg-glow.k-season{background:radial-gradient(circle,#ffd16640,transparent 65%)}
+.bg-glow.k-inf{background:radial-gradient(circle,#ff4fa340,transparent 65%)}
+.bg-glow.k-creator{background:radial-gradient(circle,#3fd8f240,transparent 65%)}
+.overlay.on .bg-glow{animation:glowP 2.4s ease-in-out infinite}
+@keyframes glowP{50%{transform:scale(1.12);opacity:.6}}
+#bgName{margin-top:4px}
+.bg-rare{display:inline-block;margin:8px 0 4px;padding:4px 12px;border-radius:9px;font-size:12px;font-weight:800;background:var(--p2);color:var(--mute)}
+.bg-rare.r0{background:#3fd8f226;color:#8deeff} .bg-rare.r1{background:#ffd16626;color:#ffe08a} .bg-rare.r2{background:#b48cff26;color:#d3bcff}
+.bg-rare.r3{background:#5df2a81f;color:#9df6c8}
+#bgText{margin-top:8px} #bgNote{margin-top:6px;font-size:13px}
+
+/* shop */
+#shop{justify-content:flex-start;gap:12px}
+.sh-hero{text-align:center;padding:10px 6px 4px}
+.sh-hearts{display:flex;align-items:flex-end;justify-content:center;gap:6px;height:92px}
+.sh-hero h2{font-family:var(--display);font-weight:900;font-size:24px;margin-top:10px}
+.sh-hero p{color:#d8cff5;font-size:14px;line-height:1.45;margin:8px 8px 0}
+.tier{display:flex;gap:14px;align-items:center;padding:14px;border-radius:22px;background:var(--p1);box-shadow:0 4px 0 var(--lip);position:relative;overflow:hidden}
+.tier.t1{background:linear-gradient(135deg,#3a1f52,var(--p1) 60%)}
+.tier.t2{background:linear-gradient(135deg,#2f2468,var(--p1) 60%)}
+.tier.t3{background:linear-gradient(135deg,#4a3418,#2b1f54 65%);box-shadow:0 4px 0 var(--lip),inset 0 0 0 1.5px #ffc84a59}
+.tr-art{flex:none;width:86px;height:86px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle,#ffffff14,transparent 70%)}
+.tr-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.tr-body b{font-family:var(--display);font-weight:900;font-size:18px}
+.tier.t3 .tr-body b{color:#ffd98a}
+.tr-body ul{margin:0;padding:0 0 0 16px;font-size:13px;color:#d8cff5;line-height:1.45}
+.tr-buy{align-self:flex-start;margin-top:4px;height:42px;min-width:120px;padding:0 18px;border-radius:13px;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(180deg,#ffa75f,var(--cw));color:#2b1200;box-shadow:0 3px 0 #b8521a}
+.tier.t3 .tr-buy{background:linear-gradient(180deg,#ffe08a,#ffb22e);box-shadow:0 3px 0 #9a5a00}
+.tr-buy:disabled{background:var(--p2);color:var(--good);box-shadow:none}
+.tr-buy svg{width:16px;height:16px}
+.tr-buy:not(:disabled):active{transform:translateY(2px)}
+.sh-note{font-size:12px;color:var(--mute);text-align:center;margin:2px 10px;line-height:1.45}
+.sh-note.warn{color:#ffd98a}
+.ab.on{background:#ffc84a33;color:#ffe08a}
+@media (prefers-reduced-motion:reduce){.bdg.k-donor.t3 .halo,.bdg.big .shine,.overlay.on .bg-glow{animation:none}}
 
 </style>
 </head>
@@ -1021,6 +1101,8 @@ html.standalone .install-tip{display:none !important}
 
 <!-- menu -->
 <section id="menu" class="screen">
+  <div class="menu-bar"><button class="me-chip" id="meChip"></button>
+    <button class="shop-btn" id="bShop"><svg viewBox="0 0 32 32"><path d="M16 28.2C6.4 21.6 3 16.2 3 11.3 3 7.6 5.9 4.8 9.4 4.8c2.8 0 5 1.6 6.6 4 1.6-2.4 3.8-4 6.6-4 3.5 0 6.4 2.8 6.4 6.5 0 4.9-3.4 10.3-13 16.9z" fill="currentColor"/></svg><span data-i18n="shopTab"></span></button></div>
   <div class="menu-top">
     <div class="logo"><span class="r1">R</span><span>EVE</span><span class="r2">R</span><span>SE</span></div>
     <div class="tagline" data-i18n="tagline"></div>
@@ -1152,6 +1234,12 @@ html.standalone .install-tip{display:none !important}
   <div class="composer" id="dmComposer" hidden><input class="text-in" id="dmInput" maxlength="400" autocomplete="off" enterkeyhint="send"><button class="send" id="dmSend" aria-label="send"><svg><use href="#i-send"/></svg></button></div>
 </section>
 
+<!-- supporter shop -->
+<section id="shop" class="screen">
+  <div class="page-head"><button class="icon-btn" id="shBack" aria-label="back"><svg><use href="#i-back"/></svg></button><h1 data-i18n="shopTitle"></h1></div>
+  <div class="page" id="shBody"></div>
+</section>
+
 <!-- leaderboards -->
 <section id="top" class="screen">
   <div class="page-head"><button class="icon-btn" id="tpBack" aria-label="back"><svg><use href="#i-back"/></svg></button><h1 data-i18n="topTitle"></h1></div>
@@ -1216,7 +1304,7 @@ html.standalone .install-tip{display:none !important}
     <button class="btn" id="sPrivacy" data-i18n="privacy"></button>
     <button class="btn ghost" id="sReset" style="color:var(--danger)" data-i18n="resetProgress"></button>
   </div>
-  <div class="version">Reverse 1.3.0</div>
+  <div class="version">Reverse 1.4.0</div>
 </div></div>
 
 
@@ -1288,6 +1376,16 @@ html.standalone .install-tip{display:none !important}
   <h2 id="cgTitle"></h2>
   <p id="cgSub"></p>
   <div class="actions" id="cgActions"></div>
+</div></div>
+
+<div class="overlay" id="ovBadge"><div class="sheet center">
+  <button class="close bg-x" data-close aria-label="close"><svg><use href="#i-x"/></svg></button>
+  <div class="bg-art" id="bgArt"></div>
+  <h2 id="bgName"></h2>
+  <span class="bg-rare" id="bgRare"></span>
+  <p id="bgText"></p>
+  <p class="muted" id="bgNote"></p>
+  <div class="actions"><button class="btn primary" id="bgAct"></button></div>
 </div></div>
 
 <div class="overlay" id="ovPrivacy"><div class="sheet">
@@ -1839,6 +1937,28 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bossOn: 'Режим босса включён', bossBad: 'Код не подошёл', bossOff: 'Режим босса выключен',
       lobbyTitle: 'Дуэли', olTop: 'Топ сезона', olAll: 'Весь', olEmpty: 'Топ сезона пока пуст. Сыграй {n} рейтинговых матча — и ты в нём.',
       res_win: 'Победа', res_lose: 'Поражение', res_draw: 'Ничья',
+      shopTab: 'Магазин', shopTitle: 'Магазин', offlineChip: 'не в сети',
+      shopHero: 'Поддержи Reverse', shopText: 'Игра бесплатная и без рекламы. Поддержка оплачивает сервер и новые режимы, а ты получаешь значок, который видят все.',
+      bd_1: 'Сторонник', bd_2: 'Меценат', bd_3: 'Легенда',
+      bdText_1: 'Розовое сердце у ника. Его получают те, кто поддержал игру.', bdText_2: 'Аметистовое сердце с искрой у ника — за щедрую поддержку игры.',
+      bdText_3: 'Золотое сердце с короной, золотой ник и сияющая рамка аватара. Самый редкий знак поддержки.',
+      bdNote: 'Значок поддержки остаётся навсегда', bdThanks: 'Спасибо за поддержку! Значок уже у твоего ника.',
+      perks_1: 'Значок «Сторонник» у ника|Виден в чате, топе и профиле', perks_2: 'Значок «Меценат» с искрой|Всё из «Сторонника»',
+      perks_3: 'Золотое сердце с короной|Золотой ник и сияющая рамка аватара|Всё из «Мецената»',
+      owned: 'Получено', buying: 'Оплата…', buy: 'Купить', buyFail: 'Покупка не прошла', buyFail_cfg: 'Проверка покупок ещё не настроена на сервере', buyFail_x: 'Деньги не списаны или вернутся автоматически',
+      shopNote: 'Покупки не дают преимуществ в игре — только значки. Значок поддержки остаётся навсегда.',
+      shopSoon: 'Оплата через Google Play появится в ближайшем обновлении.', shopSoonWeb: 'Оплата скоро появится.', shopSoonT: 'Скоро',
+      donateAsk: 'Поддержать: {n}', donateText: 'Откроется страница оплаты. В комментарии укажи свой ID {id}, и значок появится у твоего ника.', donateGo: 'Перейти',
+      toShop: 'В магазин', gotIt: 'Понятно', standTitle: 'Значки',
+      lockedName_donor: 'Поддержка', lockedName_season: 'Топ сезона', lockedName_inf: 'Инфлюенсер',
+      rareMythic: 'Уникальный', rareLegend: 'Легендарный', rareEpic: 'Эпический', rareRare: 'Редкий', rareCommon: 'Обычный',
+      bs_1: 'Чемпион сезона {n}', bs_2: 'Топ-3 сезона {n}', bs_3: 'Топ-10 сезона {n}', bs_4: 'Топ-100 сезона {n}',
+      bsText_1: 'Первое место в мировом рейтинге по итогам сезона {n}.', bsText_2: 'Место {r} в мировом рейтинге по итогам сезона {n}.',
+      bsText_3: 'Место {r} в мировом рейтинге по итогам сезона {n}.', bsText_4: 'Место {r} в мировом топ-100 по итогам сезона {n}.',
+      bsRank: 'Выдаётся в конце сезона: 1 место, топ-3, топ-10 и топ-100 мира', bsHow: 'Закончи сезон в мировом топ-100, и значок появится здесь.',
+      bText_inf: 'Знак автора, который рассказывает об игре. Выдаёт команда Reverse.', bText_creator: 'Создатель игры Reverse.',
+      sys_donor: 'Спасибо за поддержку! Значок «{t}» уже у твоего ника.', usage_donor: 'Так: /donor ID 1|2|3', sys_donation: 'Поддержка: {n} (ID {id}) — уровень {t}, {source}',
+      done_donor: 'Готово: {n} получил значок поддержки', done_undonor: 'Готово: значок поддержки снят', done_donatelink: 'Ссылка для оплаты в веб-версии сохранена', done_donatelink_off: 'Ссылка для оплаты убрана',
       friendsTab: 'Друзья', chatTab: 'Чат', friendsTitle: 'Друзья', chatTitle: 'Чат', addShort: 'Добавить', addFriend: 'Добавить друга',
       addFriendText: 'Введи ID игрока — шесть цифр из его профиля.', sendRequest: 'Отправить заявку', afBad: 'ID — это 6 цифр',
       af_no_player: 'Игрока с таким ID нет', af_self: 'Это твой ID', af_already: 'Вы уже друзья', af_friends_full: 'В друзьях максимум 200 человек',
@@ -1884,7 +2004,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Готово: ник «{o}» сброшен', done_untop: 'Готово: {n} убран из топа', done_badge: 'Готово: {n} получил значок «Инфлюенсер»', done_unbadge: 'Готово: у {n} снят значок',
       done_link: 'Готово: ссылка {n} обновлена', done_announce: 'Объявление отправлено в мировой чат', done_creator_on: 'Твой значок «Создатель» включён', done_creator_off: 'Твой значок «Создатель» скрыт',
       sys_help_short: 'Список команд',
-      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/creator on|off — твой значок',
+      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/creator on|off — твой значок',
       vsWin: 'Победа', vsLose: 'Поражение', vsCasual: 'Обычный матч: рейтинг не меняется', vsTraining: 'Тренировка: рейтинг не меняется',
       vsStreak: 'Серия побед: {n}',
       delAcc: 'Удалить онлайн-аккаунт', delAsk: 'Удалить онлайн-аккаунт?', delYes: 'Удалить',
@@ -1904,6 +2024,28 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       incoming: 'летит', sent: 'Атака ×{n}', blocked: 'Блок ×{n}', duel: 'Дуэль',
       resignAsk: 'Сдаться?', resignText: 'Победа достанется сопернику.', resignYes: 'Сдаться',
       res_win: 'Победа', res_lose: 'Поражение', res_draw: 'Ничья',
+      shopTab: 'Магазин', shopTitle: 'Магазин', offlineChip: 'не в сети',
+      shopHero: 'Поддержи Reverse', shopText: 'Игра бесплатная и без рекламы. Поддержка оплачивает сервер и новые режимы, а ты получаешь значок, который видят все.',
+      bd_1: 'Сторонник', bd_2: 'Меценат', bd_3: 'Легенда',
+      bdText_1: 'Розовое сердце у ника. Его получают те, кто поддержал игру.', bdText_2: 'Аметистовое сердце с искрой у ника — за щедрую поддержку игры.',
+      bdText_3: 'Золотое сердце с короной, золотой ник и сияющая рамка аватара. Самый редкий знак поддержки.',
+      bdNote: 'Значок поддержки остаётся навсегда', bdThanks: 'Спасибо за поддержку! Значок уже у твоего ника.',
+      perks_1: 'Значок «Сторонник» у ника|Виден в чате, топе и профиле', perks_2: 'Значок «Меценат» с искрой|Всё из «Сторонника»',
+      perks_3: 'Золотое сердце с короной|Золотой ник и сияющая рамка аватара|Всё из «Мецената»',
+      owned: 'Получено', buying: 'Оплата…', buy: 'Купить', buyFail: 'Покупка не прошла', buyFail_cfg: 'Проверка покупок ещё не настроена на сервере', buyFail_x: 'Деньги не списаны или вернутся автоматически',
+      shopNote: 'Покупки не дают преимуществ в игре — только значки. Значок поддержки остаётся навсегда.',
+      shopSoon: 'Оплата через Google Play появится в ближайшем обновлении.', shopSoonWeb: 'Оплата скоро появится.', shopSoonT: 'Скоро',
+      donateAsk: 'Поддержать: {n}', donateText: 'Откроется страница оплаты. В комментарии укажи свой ID {id}, и значок появится у твоего ника.', donateGo: 'Перейти',
+      toShop: 'В магазин', gotIt: 'Понятно', standTitle: 'Значки',
+      lockedName_donor: 'Поддержка', lockedName_season: 'Топ сезона', lockedName_inf: 'Инфлюенсер',
+      rareMythic: 'Уникальный', rareLegend: 'Легендарный', rareEpic: 'Эпический', rareRare: 'Редкий', rareCommon: 'Обычный',
+      bs_1: 'Чемпион сезона {n}', bs_2: 'Топ-3 сезона {n}', bs_3: 'Топ-10 сезона {n}', bs_4: 'Топ-100 сезона {n}',
+      bsText_1: 'Первое место в мировом рейтинге по итогам сезона {n}.', bsText_2: 'Место {r} в мировом рейтинге по итогам сезона {n}.',
+      bsText_3: 'Место {r} в мировом рейтинге по итогам сезона {n}.', bsText_4: 'Место {r} в мировом топ-100 по итогам сезона {n}.',
+      bsRank: 'Выдаётся в конце сезона: 1 место, топ-3, топ-10 и топ-100 мира', bsHow: 'Закончи сезон в мировом топ-100, и значок появится здесь.',
+      bText_inf: 'Знак автора, который рассказывает об игре. Выдаёт команда Reverse.', bText_creator: 'Создатель игры Reverse.',
+      sys_donor: 'Спасибо за поддержку! Значок «{t}» уже у твоего ника.', usage_donor: 'Так: /donor ID 1|2|3', sys_donation: 'Поддержка: {n} (ID {id}) — уровень {t}, {source}',
+      done_donor: 'Готово: {n} получил значок поддержки', done_undonor: 'Готово: значок поддержки снят', done_donatelink: 'Ссылка для оплаты в веб-версии сохранена', done_donatelink_off: 'Ссылка для оплаты убрана',
       friendsTab: 'Друзья', chatTab: 'Чат', friendsTitle: 'Друзья', chatTitle: 'Чат', addShort: 'Добавить', addFriend: 'Добавить друга',
       addFriendText: 'Введи ID игрока — шесть цифр из его профиля.', sendRequest: 'Отправить заявку', afBad: 'ID — это 6 цифр',
       af_no_player: 'Игрока с таким ID нет', af_self: 'Это твой ID', af_already: 'Вы уже друзья', af_friends_full: 'В друзьях максимум 200 человек',
@@ -1949,7 +2091,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Готово: ник «{o}» сброшен', done_untop: 'Готово: {n} убран из топа', done_badge: 'Готово: {n} получил значок «Инфлюенсер»', done_unbadge: 'Готово: у {n} снят значок',
       done_link: 'Готово: ссылка {n} обновлена', done_announce: 'Объявление отправлено в мировой чат', done_creator_on: 'Твой значок «Создатель» включён', done_creator_off: 'Твой значок «Создатель» скрыт',
       sys_help_short: 'Список команд',
-      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/creator on|off — твой значок',
+      sys_help: '<b>Команды</b> (ID — 6 цифр из профиля)<br>/info ID — карточка игрока с кнопками<br>/badge ID ссылка — выдать «Инфлюенсер» (ссылка необязательна)<br>/unbadge ID — забрать значок<br>/link ID ссылка — ссылка на соцсеть<br>/ban ID 1d|7d|30d|forever причина<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — сбросить ник<br>/untop ID — убрать из топа<br>/reports — открытые жалобы<br>/announce текст — объявление в мировой чат<br>/stats — кто сейчас в игре<br>/donor ID 1|2|3 — выдать значок поддержки · /undonor ID<br>/donatelink ссылка — оплата в веб-версии<br>/creator on|off — твой значок',
       vsWin: 'Победа', vsLose: 'Поражение', vsCasual: 'Обычный матч: рейтинг не меняется', vsTraining: 'Тренировка: рейтинг не меняется',
       vsStreak: 'Серия побед: {n}',
       delAcc: 'Удалить онлайн-аккаунт', delAsk: 'Удалить онлайн-аккаунт?', delYes: 'Удалить',
@@ -1998,7 +2140,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       t8: 'Игра идёт, пока на поле есть место. Зажми палец на клетке — увидишь, куда она уедет и сколько принесёт.',
       tNext: 'Дальше', tGo: 'Играть', tSkip: 'Пропустить',
       privacyTitle: 'Конфиденциальность',
-      privacyBody: '<p>Без рекламы, аналитики и трекеров. Данные не продаются и не передаются третьим лицам.</p><h3>Онлайн-аккаунт</h3><p>При первом входе в онлайн-режим создаётся анонимный аккаунт, без e-mail и телефона. На сервере хранятся ник, аватар, страна, рейтинг, статистика, история матчей, друзья, сообщения и жалобы. Профиль и статус «в сети» видны другим игрокам.</p><h3>Чат</h3><p>Общий чат хранится 7 дней, личные сообщения — пока есть аккаунт. Сообщения фильтруются, любого можно заблокировать или пожаловаться на него. Жалобы проверяет модератор.</p><h3>Страна</h3><p>Определяется один раз по IP-адресу, с точностью до страны. Сам IP в базу не записывается. Сменить страну можно в профиле раз в 30 дней.</p><h3>Матчи</h3><p>Ходы передаются на сервер для проверки и не сохраняются после матча. Соединение шифруется.</p><h3>Удаление</h3><p>Профиль → «Удалить онлайн-аккаунт» сразу удаляет профиль, рейтинг, друзей и сообщения с сервера. Без телефона: reverse-duel.onrender.com/delete-account и код переноса.</p><h3>На устройстве</h3><p>Рекорды одиночной игры, статистика, достижения и настройки хранятся только на телефоне. Удалить: «Сбросить прогресс» или удалить приложение.</p><h3>Разрешения</h3><p>Вибрация — для тактильной отдачи. Интернет — только для онлайн-режима.</p><h3>Контакты</h3><p>Через страницу игры в Google Play. Полная версия: reverse-duel.onrender.com/privacy</p>',
+      privacyBody: '<p>Без рекламы, аналитики и трекеров. Данные не продаются и не передаются третьим лицам.</p><h3>Онлайн-аккаунт</h3><p>При первом входе в онлайн-режим создаётся анонимный аккаунт, без e-mail и телефона. На сервере хранятся ник, аватар, страна, рейтинг, статистика, история матчей, друзья, сообщения и жалобы. Профиль и статус «в сети» видны другим игрокам.</p><h3>Чат</h3><p>Общий чат хранится 7 дней, личные сообщения — пока есть аккаунт. Сообщения фильтруются, любого можно заблокировать или пожаловаться на него. Жалобы проверяет модератор.</p><h3>Значки и поддержка</h3><p>Значки за места в топе и уровень поддержки хранятся в профиле. Платежи обрабатывает Google Play, игра видит только факт покупки.</p><h3>Страна</h3><p>Определяется один раз по IP-адресу, с точностью до страны. Сам IP в базу не записывается. Сменить страну можно в профиле раз в 30 дней.</p><h3>Матчи</h3><p>Ходы передаются на сервер для проверки и не сохраняются после матча. Соединение шифруется.</p><h3>Удаление</h3><p>Профиль → «Удалить онлайн-аккаунт» сразу удаляет профиль, рейтинг, друзей и сообщения с сервера. Без телефона: reverse-duel.onrender.com/delete-account и код переноса.</p><h3>На устройстве</h3><p>Рекорды одиночной игры, статистика, достижения и настройки хранятся только на телефоне. Удалить: «Сбросить прогресс» или удалить приложение.</p><h3>Разрешения</h3><p>Вибрация — для тактильной отдачи. Интернет — только для онлайн-режима.</p><h3>Контакты</h3><p>Через страницу игры в Google Play. Полная версия: reverse-duel.onrender.com/privacy</p>',
       ach: {
         first: ['Первый оборот', 'Сыграй первую партию'],
         gear: ['Сцепка', 'Слей плитки поворотом колец'],
@@ -2050,6 +2192,28 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       bossOn: 'Boss mode on', bossBad: 'Wrong code', bossOff: 'Boss mode off',
       lobbyTitle: 'Duels', olTop: 'Season top', olAll: 'All', olEmpty: 'The season top is still empty. Play {n} ranked matches to get in.',
       res_win: 'Win', res_lose: 'Loss', res_draw: 'Draw',
+      shopTab: 'Shop', shopTitle: 'Shop', offlineChip: 'offline',
+      shopHero: 'Support Reverse', shopText: 'The game is free with no ads. Support pays for the server and new modes, and you get a badge everyone can see.',
+      bd_1: 'Supporter', bd_2: 'Patron', bd_3: 'Legend',
+      bdText_1: 'A rose heart next to your name, for players who supported the game.', bdText_2: 'An amethyst heart with a spark, for generous support.',
+      bdText_3: 'A golden crowned heart, a golden name and a glowing avatar frame. The rarest sign of support.',
+      bdNote: 'Supporter badges stay forever', bdThanks: 'Thank you! The badge is already next to your name.',
+      perks_1: 'Supporter badge next to your name|Shown in chat, rankings and profile', perks_2: 'Patron badge with a spark|Everything from Supporter',
+      perks_3: 'Golden crowned heart|Golden name and glowing avatar frame|Everything from Patron',
+      owned: 'Owned', buying: 'Paying…', buy: 'Buy', buyFail: 'Purchase didn’t go through', buyFail_cfg: 'Purchase checks aren’t set up on the server yet', buyFail_x: 'You weren’t charged, or the money comes back automatically',
+      shopNote: 'Purchases give no gameplay advantage, only badges. Supporter badges stay forever.',
+      shopSoon: 'Google Play payments arrive in the next update.', shopSoonWeb: 'Payments are coming soon.', shopSoonT: 'Coming soon',
+      donateAsk: 'Support: {n}', donateText: 'A payment page opens. Put your ID {id} in the comment and the badge will appear next to your name.', donateGo: 'Continue',
+      toShop: 'Go to shop', gotIt: 'Got it', standTitle: 'Badges',
+      lockedName_donor: 'Support', lockedName_season: 'Season top', lockedName_inf: 'Influencer',
+      rareMythic: 'Unique', rareLegend: 'Legendary', rareEpic: 'Epic', rareRare: 'Rare', rareCommon: 'Common',
+      bs_1: 'Season {n} champion', bs_2: 'Season {n} top 3', bs_3: 'Season {n} top 10', bs_4: 'Season {n} top 100',
+      bsText_1: 'First place in the world ranking at the end of season {n}.', bsText_2: 'Place {r} in the world ranking at the end of season {n}.',
+      bsText_3: 'Place {r} in the world ranking at the end of season {n}.', bsText_4: 'Place {r} in the world top 100 at the end of season {n}.',
+      bsRank: 'Given at the end of each season: 1st place, top 3, top 10 and top 100 of the world', bsHow: 'Finish a season in the world top 100 and the badge shows up here.',
+      bText_inf: 'A creator who makes videos about the game. Given by the Reverse team.', bText_creator: 'The creator of Reverse.',
+      sys_donor: 'Thank you for the support! The “{t}” badge is next to your name.', usage_donor: 'Use: /donor ID 1|2|3', sys_donation: 'Support: {n} (ID {id}), tier {t}, {source}',
+      done_donor: 'Done: {n} got a supporter badge', done_undonor: 'Done: supporter badge removed', done_donatelink: 'Web payment link saved', done_donatelink_off: 'Web payment link removed',
       friendsTab: 'Friends', chatTab: 'Chat', friendsTitle: 'Friends', chatTitle: 'Chat', addShort: 'Add', addFriend: 'Add a friend',
       addFriendText: 'Enter the player’s ID: the six digits in their profile.', sendRequest: 'Send request', afBad: 'An ID is 6 digits',
       af_no_player: 'No player with this ID', af_self: 'That’s your ID', af_already: 'You’re already friends', af_friends_full: 'You can have up to 200 friends',
@@ -2095,7 +2259,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       done_rename: 'Done: nickname “{o}” reset', done_untop: 'Done: {n} removed from the ranking', done_badge: 'Done: {n} got the “Influencer” badge', done_unbadge: 'Done: {n} lost the badge',
       done_link: 'Done: link for {n} updated', done_announce: 'Announcement sent to the world chat', done_creator_on: 'Your “Creator” badge is on', done_creator_off: 'Your “Creator” badge is hidden',
       sys_help_short: 'Command list',
-      sys_help: '<b>Commands</b> (ID is the 6 digits in a profile)<br>/info ID — player card with buttons<br>/badge ID link — give “Influencer” (link optional)<br>/unbadge ID — take the badge away<br>/link ID link — social link<br>/ban ID 1d|7d|30d|forever reason<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — reset nickname<br>/untop ID — remove from the ranking<br>/reports — open reports<br>/announce text — world chat announcement<br>/stats — who is online<br>/creator on|off — your badge',
+      sys_help: '<b>Commands</b> (ID is the 6 digits in a profile)<br>/info ID — player card with buttons<br>/badge ID link — give “Influencer” (link optional)<br>/unbadge ID — take the badge away<br>/link ID link — social link<br>/ban ID 1d|7d|30d|forever reason<br>/unban ID<br>/mute ID 1h|1d|7d · /unmute ID<br>/rename ID — reset nickname<br>/untop ID — remove from the ranking<br>/reports — open reports<br>/announce text — world chat announcement<br>/stats — who is online<br>/donor ID 1|2|3 — give a supporter badge · /undonor ID<br>/donatelink link — web payments<br>/creator on|off — your badge',
       vsWin: 'Win', vsLose: 'Loss', vsCasual: 'Casual match: rating doesn’t change', vsTraining: 'Practice: rating doesn’t change',
       vsStreak: 'Win streak: {n}',
       delAcc: 'Delete online account', delAsk: 'Delete online account?', delYes: 'Delete',
@@ -2158,7 +2322,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       t8: 'The game lasts while the board has room. Hold a cell to see where the tile lands and what it scores.',
       tNext: 'Next', tGo: 'Play', tSkip: 'Skip',
       privacyTitle: 'Privacy',
-      privacyBody: '<p>No ads, analytics or trackers. Data is never sold or shared with third parties.</p><h3>Online account</h3><p>The first time you play online, an anonymous account is created, with no e-mail or phone. The server stores your nickname, avatar, country, rating, stats, match history, friends, messages and reports. Your profile and online status are visible to other players.</p><h3>Chat</h3><p>World chat is kept for 7 days, private messages while the account exists. Messages are filtered; you can block or report anyone. A moderator reviews reports.</p><h3>Country</h3><p>Looked up once from your IP address, country-level only. The IP itself is not saved to the database. You can change your country in your profile once every 30 days.</p><h3>Matches</h3><p>Moves are sent to the server for verification and are not kept after the match. The connection is encrypted.</p><h3>Deletion</h3><p>Profile → “Delete online account” removes your profile, rating, friends and messages from the server at once. Without your phone: reverse-duel.onrender.com/delete-account with your transfer code.</p><h3>On your device</h3><p>Solo records, stats, achievements and settings are stored only on your phone. Remove them with “Reset progress” or by uninstalling the app.</p><h3>Permissions</h3><p>Vibration, for haptic feedback. Internet, only for online play.</p><h3>Contact</h3><p>Through the game’s Google Play page. Full policy: reverse-duel.onrender.com/privacy</p>',
+      privacyBody: '<p>No ads, analytics or trackers. Data is never sold or shared with third parties.</p><h3>Online account</h3><p>The first time you play online, an anonymous account is created, with no e-mail or phone. The server stores your nickname, avatar, country, rating, stats, match history, friends, messages and reports. Your profile and online status are visible to other players.</p><h3>Chat</h3><p>World chat is kept for 7 days, private messages while the account exists. Messages are filtered; you can block or report anyone. A moderator reviews reports.</p><h3>Badges and support</h3><p>Season badges and your supporter tier are kept in your profile. Payments are handled by Google Play; the game only sees that a purchase happened.</p><h3>Country</h3><p>Looked up once from your IP address, country-level only. The IP itself is not saved to the database. You can change your country in your profile once every 30 days.</p><h3>Matches</h3><p>Moves are sent to the server for verification and are not kept after the match. The connection is encrypted.</p><h3>Deletion</h3><p>Profile → “Delete online account” removes your profile, rating, friends and messages from the server at once. Without your phone: reverse-duel.onrender.com/delete-account with your transfer code.</p><h3>On your device</h3><p>Solo records, stats, achievements and settings are stored only on your phone. Remove them with “Reset progress” or by uninstalling the app.</p><h3>Permissions</h3><p>Vibration, for haptic feedback. Internet, only for online play.</p><h3>Contact</h3><p>Through the game’s Google Play page. Full policy: reverse-duel.onrender.com/privacy</p>',
       ach: {
         first: ['First turn', 'Finish your first game'],
         gear: ['Gear match', 'Merge tiles by turning the rings'],
@@ -3607,8 +3771,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       } else {
         var k = Rank.rankOf(me.rating), placed = PX.placed(me), tier = Rank.TIERS[k.idx];
         el.style.setProperty('--t1', tier.c1);
-        el.innerHTML = PX.avatar(me.avatar, 56) +
-          '<span class="mc-body"><span class="mc-name">' + PX.esc(me.name) + ' <span class="fl">' + PX.flag(me.cc) + '</span></span>' +
+        el.innerHTML = PX.avatarF(me, 56) +
+          '<span class="mc-body"><span class="mc-name">' + PX.tag(me, false) + '</span>' +
           '<span class="mc-tier">' + PX.tierLabel(me) + (placed ? ' · <b>' + fmt(me.rating) + '</b>' : '') + '</span>' +
           (placed && k.hi != null ? '<span class="bar"><i style="width:' + Math.round(k.progress * 100) + '%"></i></span><span class="mc-next">' + PX.nextLabel(me.rating) + '</span>'
             : placed ? '' : '<span class="mc-sub">' + t('calibText', { n: Rank.PLACEMENT - (me.sGames || 0) }) + '</span>') +
@@ -3650,7 +3814,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       var training = p.bot && !p.id;
       var h = '<i class="vc-bg"><svg class="vc-ring" viewBox="0 0 240 240"><circle cx="120" cy="120" r="100"/></svg></i>' +
         '<div class="vc-top">' + PX.avatarF(p, 76) + '<div class="vc-id"><div class="vc-name' + (p.badge ? ' n-' + p.badge : '') + '">' + PX.esc(training ? t('botName') : p.name) +
-        (p.badge ? PX.badgeIcon(p.badge, 24, true) : '') + '</div>' +
+        PX.badgeIcons(p, 24) + '</div>' +
         '<div class="vc-cc">' + (training ? t('botTier') : '<span class="fl">' + PX.flag(p.cc) + '</span><span>' + PX.esc(PX.cname(p.cc)) + '</span>') + '</div></div></div>';
       if (training) return h;
       var k = Rank.rankOf(p.rating), placed = PX.placed(p);
@@ -4000,25 +4164,72 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     return d + 'Z';
   })();
   var HEX = 'M16 1.8l12.3 7.1v14.2L16 30.2 3.7 23.1V8.9z';
+  var HEART = 'M16 28.2C6.4 21.6 3 16.2 3 11.3 3 7.6 5.9 4.8 9.4 4.8c2.8 0 5 1.6 6.6 4 1.6-2.4 3.8-4 6.6-4 3.5 0 6.4 2.8 6.4 6.5 0 4.9-3.4 10.3-13 16.9z';
+  // laurel: leaves along two arcs
+  var LAUREL = (function () {   // two laurel branches hugging the medal, from the bottom up the sides
+    var d = '';
+    for (var i = 0; i < 5; i++) {
+      var aL = 112 + i * 26, aR = 68 - i * 26, R = 12.6;
+      [[aL, aL - 180 + 18], [aR, aR - 18]].forEach(function (q) {
+        var a = q[0] * Math.PI / 180, x = (16 + R * Math.cos(a)).toFixed(2), y = (16.2 + R * Math.sin(a)).toFixed(2);
+        d += '<ellipse cx="' + x + '" cy="' + y + '" rx="1.7" ry="3.3" transform="rotate(' + q[1] + ' ' + x + ' ' + y + ')"/>';
+      });
+    }
+    return d;
+  })();
+  function seasonTier(r) { return r === 1 ? 1 : r <= 3 ? 2 : r <= 10 ? 3 : 4; }
   (function defs() {   // gradients and clip paths shared by every badge on the page
     var d = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     d.setAttribute('width', '0'); d.setAttribute('height', '0'); d.setAttribute('aria-hidden', 'true'); d.style.position = 'absolute';
     d.innerHTML = '<defs><linearGradient id="g-inf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4fa3"/><stop offset=".55" stop-color="#ff8a5c"/><stop offset="1" stop-color="#ffd166"/></linearGradient>' +
       '<linearGradient id="g-shine" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
-      '<clipPath id="c-seal"><path d="' + SEAL + '"/></clipPath></defs>';
+      '<clipPath id="c-seal"><path d="' + SEAL + '"/></clipPath><clipPath id="c-heart"><path d="' + HEART + '"/></clipPath>' +
+      '<linearGradient id="g-d1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffa3a3"/><stop offset="1" stop-color="#ff3d64"/></linearGradient>' +
+      '<linearGradient id="g-d2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d7b8ff"/><stop offset="1" stop-color="#7a45ff"/></linearGradient>' +
+      '<linearGradient id="g-d3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".55" stop-color="#ffc84a"/><stop offset="1" stop-color="#ff9a1f"/></linearGradient>' +
+      '<radialGradient id="g-halo"><stop offset="0" stop-color="#ffd166" stop-opacity=".55"/><stop offset="1" stop-color="#ffd166" stop-opacity="0"/></radialGradient>' +
+      '<linearGradient id="g-s1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b0"/><stop offset="1" stop-color="#f0a92a"/></linearGradient>' +
+      '<linearGradient id="g-s2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#a9b6cc"/></linearGradient>' +
+      '<linearGradient id="g-s3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcfa6"/><stop offset="1" stop-color="#c46a32"/></linearGradient>' +
+      '<linearGradient id="g-s4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9bdff"/><stop offset="1" stop-color="#6b55e8"/></linearGradient></defs>';
     document.body.appendChild(d);
   })();
-  function badgeIcon(kind, size, big) {
-    var cls = 'bdg ' + kind + (big ? ' big' : ''), sz = ' width="' + size + '" height="' + size + '"';
+  function badgeIcon(kind, size, big, b) {
+    if (kind && typeof kind === 'object') { b = kind; kind = b.k; }
+    b = b || { k: kind };
+    var cls = 'bdg k-' + kind + (big ? ' big' : ''), sz = ' width="' + size + '" height="' + size + '"';
+    var data = ' data-b="' + esc(JSON.stringify(b)) + '"';
+    if (kind === 'donor') {
+      var tt = Math.max(1, Math.min(3, b.t || 1));
+      return '<svg class="' + cls + ' t' + tt + '"' + sz + data + ' viewBox="0 0 32 32" aria-hidden="true">' +
+        (tt === 3 ? '<circle class="halo" cx="16" cy="16" r="16" fill="url(#g-halo)"/>' : '') +
+        '<path d="' + HEART + '" fill="url(#g-d' + tt + ')" stroke="' + ['#a3173a', '#3d1a99', '#9a5a00'][tt - 1] + '" stroke-width="1.3" stroke-linejoin="round"/>' +
+        '<g clip-path="url(#c-heart)"><path d="M3 11 16 9 16 29z" fill="#fff" fill-opacity=".16"/><path d="M16 9 29 11 16 29z" fill="#000" fill-opacity=".1"/>' +
+        '<path d="M6.5 8.2c1.4-1.6 3.6-1.9 5.2-.9" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="1.6" stroke-linecap="round"/>' +
+        (big ? '<g class="shine"><rect x="-14" y="-4" width="9" height="40" fill="url(#g-shine)" transform="rotate(20 16 16)"/></g>' : '') + '</g>' +
+        (tt === 3 ? '<path d="M10.6 5.6l1.6 1.8L16 3.4l3.8 4 1.6-1.8.6 4.2H10z" fill="#fff4c2" stroke="#9a5a00" stroke-width=".9" stroke-linejoin="round" transform="translate(0 -1.2)"/>' : '') +
+        (tt >= 2 ? '<path d="M25.4 3.6l.6 1.6 1.6.6-1.6.6-.6 1.6-.6-1.6-1.6-.6 1.6-.6z" fill="#fff"/>' : '') + '</svg>';
+    }
+    if (kind === 'season') {
+      var st = seasonTier(b.r || 100), label = b.r === 1 ? '1' : b.r <= 3 ? '3' : b.r <= 10 ? '10' : '100';
+      var col = ['#f0a92a', '#a9b6cc', '#c46a32', '#6b55e8'][st - 1], dark = ['#7a4a00', '#4a5466', '#5e2a0c', '#2c1f7a'][st - 1];
+      return '<svg class="' + cls + ' s' + st + '"' + sz + data + ' viewBox="0 0 32 32" aria-hidden="true">' +
+        '<g fill="' + col + '">' + LAUREL + '</g>' +
+        '<circle cx="16" cy="15.6" r="8.6" fill="url(#g-s' + st + ')" stroke="' + dark + '" stroke-width="1.2"/>' +
+        '<circle cx="16" cy="15.6" r="6.4" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width=".8"/>' +
+        '<text x="16" y="' + (label.length > 2 ? 18.2 : 19.3) + '" text-anchor="middle" font-family="Unbounded,U,sans-serif" font-weight="900" font-size="' + (label.length > 2 ? 6.2 : label.length > 1 ? 7.6 : 9.6) + '" fill="' + dark + '">' + label + '</text>' +
+        (st === 1 ? '<path d="M12.6 3.2l1.3 1.5L16 2l2.1 2.7 1.3-1.5.5 3.4h-7.8z" fill="#ffd166" stroke="#7a4a00" stroke-width=".8" stroke-linejoin="round"/>' : '') +
+        (big ? '<g clip-path="url(#c-seal)"><g class="shine"><rect x="-14" y="-4" width="9" height="40" fill="url(#g-shine)" transform="rotate(20 16 16)"/></g></g>' : '') + '</svg>';
+    }
     if (kind === 'inf') {
-      return '<svg class="' + cls + '"' + sz + ' viewBox="0 0 32 32" aria-hidden="true"><path d="' + SEAL + '" fill="url(#g-inf)"/>' +
+      return '<svg class="' + cls + '"' + sz + data + ' viewBox="0 0 32 32" aria-hidden="true"><path d="' + SEAL + '" fill="url(#g-inf)"/>' +
         (big ? '<g clip-path="url(#c-seal)"><g class="shine"><rect x="-14" y="-4" width="10" height="40" fill="url(#g-shine)" transform="rotate(20 16 16)"/></g></g>' : '') +
         '<circle cx="16" cy="16" r="9.6" fill="none" stroke="#fff" stroke-opacity=".38" stroke-width="1"/>' +
         '<path d="M13.4 11.6v8.8l7.4-4.4z" fill="#fff" stroke="#fff" stroke-width="1.7" stroke-linejoin="round"/>' +
         '<path d="M23.6 6.2l.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8z" fill="#fff"/></svg>';
     }
     if (kind === 'creator') {
-      return '<svg class="' + cls + '"' + sz + ' viewBox="0 0 32 32" aria-hidden="true"><path d="' + HEX + '" fill="#1b1342" stroke="#ffd166" stroke-width="2.2" stroke-linejoin="round"/>' +
+      return '<svg class="' + cls + '"' + sz + data + ' viewBox="0 0 32 32" aria-hidden="true"><path d="' + HEX + '" fill="#1b1342" stroke="#ffd166" stroke-width="2.2" stroke-linejoin="round"/>' +
         '<circle class="r1" cx="16" cy="16" r="8.4" fill="none" stroke="#ff8a3d" stroke-width="2.6" stroke-dasharray="11.8 1.4"/>' +
         '<circle class="r2" cx="16" cy="16" r="4.6" fill="none" stroke="#3fd8f2" stroke-width="2.4" stroke-dasharray="6.2 1"/>' +
         '<circle cx="16" cy="16" r="1.7" fill="#ffd166"/></svg>';
@@ -4028,7 +4239,26 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
   // an avatar inside a turning frame for badge holders
   function avatarF(p, size) {
     var a = avatar(p.avatar, size);
-    return p && (p.badge === 'inf' || p.badge === 'creator') ? '<span class="afr ' + p.badge + '" style="--s:' + size + 'px">' + a + '</span>' : a;
+    return p && (p.badge === 'inf' || p.badge === 'creator' || p.badge === 'donor') ? '<span class="afr ' + p.badge + '" style="--s:' + size + 'px">' + a + '</span>' : a;
+  }
+  // the badges shown next to a name: creator, best season place, supporter, influencer (at most three)
+  function badgeList(p) {
+    var l = (p && p.badges) || (p && p.badge ? [{ k: p.badge }] : []), out = [], seen = {};
+    ['creator', 'season', 'donor', 'inf'].forEach(function (k) {
+      var b = l.filter(function (x) { return x.k === k; })[0];
+      if (b && !seen[k]) { seen[k] = 1; out.push(b); }
+    });
+    return out.slice(0, 3);
+  }
+  function badgeIcons(p, size) { return badgeList(p).map(function (b) { return badgeIcon(b, size); }).join(''); }
+  // name, description and where it came from, for the badge sheet and the stand
+  function badgeInfo(b) {
+    if (b.k === 'season') {
+      var tr = seasonTier(b.r), n = Rank.seasonNumber(b.s);
+      return { name: t('bs_' + tr, { n: n }), text: t('bsText_' + tr, { n: n, r: b.r }), note: t('bsRank', { r: b.r, n: n }), rare: tr };
+    }
+    if (b.k === 'donor') return { name: t('bd_' + (b.t || 1)), text: t('bdText_' + (b.t || 1)), note: t('bdNote'), rare: 4 - (b.t || 1) };
+    return { name: t('badge_' + b.k), text: t('bText_' + b.k), note: '', rare: b.k === 'creator' ? 0 : 2 };
   }
   function sidText(sid) { sid = String(sid || ''); return sid.length === 6 ? sid.slice(0, 3) + ' ' + sid.slice(3) : sid; }
   // presence in words: in a match, searching, online, or how long ago
@@ -4058,7 +4288,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
   function tag(p, emblem) {
     return '<span class="ptag">' + (emblem !== false && !p.bot ? badge(p, emblem || 18) : '') +
       '<span class="pn' + (p.badge ? ' n-' + p.badge : '') + '">' + esc(p.bot ? t('botName') : p.name) + '</span>' +
-      (p.badge ? badgeIcon(p.badge, 15) : '') + (p.cc ? '<span class="fl">' + flag(p.cc) + '</span>' : '') + '</span>';
+      badgeIcons(p, 15) + (p.cc ? '<span class="fl">' + flag(p.cc) + '</span>' : '') + '</span>';
   }
 
   /* ---------- profile screen ---------- */
@@ -4099,6 +4329,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     onMe: function () {
       if (this.nameSaving) { this.nameSaving = false; UI.close(); }
       this.paintMenuAvatar();
+      if (root.Badges) Badges.paintChip();
       if (UI.screen === 'profile' && this.viewing === 'me') this.request();
       if (root.Duel) Duel.renderMe();
     },
@@ -4119,6 +4350,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     },
     back: function () {
       var prev = this.stack.pop();
+      if (prev && prev.s === 'shop') { UI.show('shop'); Badges.renderShop(); return; }
       if (prev && /^(friends|chat|dm)$/.test(prev.s)) {
         if (prev.s === 'dm') Community.convoWith = prev.v;
         UI.show(prev.s); Community.onShow(prev.s); return;
@@ -4151,8 +4383,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         '<button class="pf-ava" ' + (mine ? 'id="pfAva"' : 'disabled') + '>' + avatarF(p, 76) + (mine ? '<i class="pf-edit">' + glyph('#i-pen') + '</i>' : '') + '</button>' +
         '<div class="pf-id">' +
         '<button class="pf-name' + (p.badge ? ' n-' + p.badge : '') + '" ' + (mine ? 'id="pfName"' : 'disabled') + '><span class="pnm">' + esc(p.name) + '</span>' +
-          (p.badge ? badgeIcon(p.badge, 24, true) : '') + (mine ? glyph('#i-pen', 'pen') : '') + '</button>' +
-        (p.badge ? '<span class="pf-badge ' + p.badge + '">' + t('badge_' + p.badge) + '</span>' : '') +
+          badgeIcons(p, 24) + (mine ? glyph('#i-pen', 'pen') : '') + '</button>' +
+        (p.badge ? '<span class="pf-badge ' + p.badge + '">' + (p.badge === 'donor' ? t('bd_3') : t('badge_' + p.badge)) + '</span>' : '') +
         '<div class="pf-meta"><button class="pf-cc" ' + (mine ? 'id="pfCc"' : 'disabled') + '><span class="fl">' + flag(p.cc) + '</span>' + esc(cname(p.cc)) + '</button>' +
           (p.sid ? '<button class="pf-sid" id="pfSid">ID ' + sidText(p.sid) + glyph('#i-copy') + '</button>' : '') + '</div>' +
         (st ? '<div class="pf-st s-' + st.s + '"><i class="sdot s-' + st.s + '"></i>' + statusText(st) + '</div>' : '') +
@@ -4174,6 +4406,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
           (p.cc ? '<span class="chip"><span class="fl">' + flag(p.cc) + '</span>' + (d.country ? '#' + fmt(d.country) : '—') + '</span>' : '') +
           (Net.season ? '<span class="chip">' + t('seasonN', { n: Net.season.n }) + '</span>' : '') + '</div>';
       }
+      h += Badges.standHTML(p, mine);
       // tabs
       var tabs = mine ? ['ranked', 'solo', 'ach'] : ['ranked'];
       if (tabs.length > 1) h += '<div class="seg pf-tabs">' + tabs.map(function (x) { return '<button data-pt="' + x + '" class="' + (x === S.tab ? 'on' : '') + '">' + t('pt_' + x) + '</button>'; }).join('') + '</div>';
@@ -4185,6 +4418,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       body.innerHTML = h;
       var self = this;
       if ($('pfSid')) $('pfSid').onclick = function () { UI.shareText(String(p.sid), true); };
+      Badges.wireStand(body);
       if ($('pfLink')) $('pfLink').onclick = function () { openUrl(p.link); };
       if (!mine && d) this.wireActions(p, d);
       body.querySelectorAll('[data-pt]').forEach(function (b) { b.onclick = function () { self.tab = b.getAttribute('data-pt'); self.renderProfile(); }; });
@@ -4291,7 +4525,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         h += '<div class="podium">' + [1, 0, 2].filter(function (i) { return pod[i]; }).map(function (i) {
           var r = pod[i];
           return '<button class="pod p' + (i + 1) + (me && r.id === me.id ? ' me' : '') + '" data-pid="' + esc(r.id) + '"><span class="pos">' + (i + 1) + '</span>' +
-            avatarF(r, i === 0 ? 64 : 52) + '<span class="pn' + (r.badge ? ' n-' + r.badge : '') + '">' + esc(r.name) + '</span><span class="fl">' + (r.badge ? badgeIcon(r.badge, 14) : '') + flag(r.cc) + '</span>' +
+            avatarF(r, i === 0 ? 64 : 52) + '<span class="pn' + (r.badge ? ' n-' + r.badge : '') + '">' + esc(r.name) + '</span><span class="fl">' + badgeIcons(r, 14) + flag(r.cc) + '</span>' +
             Rank.badge(r.rating, i === 0 ? 34 : 28, r.sGames) + '<b>' + fmt(r.rating) + '</b></button>';
         }).join('') + '</div>';
         h += '<div class="trows">' + list.slice(3).map(function (r) { return self.rowHTML(r, me); }).join('') + '</div>';
@@ -4301,7 +4535,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       // my position, pinned to the bottom
       var m = d.me;
       if (me) {
-        $('tpMe').innerHTML = m && m.pos ? self.rowHTML({ pos: m.pos, id: me.id, name: me.name, cc: me.cc, avatar: me.avatar, rating: me.rating, sGames: me.sGames }, me)
+        $('tpMe').innerHTML = m && m.pos ? self.rowHTML({ pos: m.pos, id: me.id, name: me.name, cc: me.cc, avatar: me.avatar, rating: me.rating, sGames: me.sGames, badge: me.badge, badges: me.badges }, me)
           : '<div class="trow me hint">' + avatar(me.avatar, 34) + '<span class="hmid"><span class="hn">' + esc(me.name) + '</span><span class="hs">' +
           t('mePlace', { n: Math.max(1, Rank.PLACEMENT - (me.sGames || 0)) }) + '</span></span></div>';
         var r = $('tpMe').querySelector('[data-pid]'); if (r) r.onclick = function () { self.openProfile(); };
@@ -4415,7 +4649,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
   };
 
   root.Social = S;
-  root.PX = { avatar: avatar, avatarF: avatarF, flag: flag, cname: cname, tag: tag, tierLabel: tierLabel, badge: badge, glyph: glyph, esc: esc, placed: placed,
+  root.PX = { badgeList: badgeList, badgeIcons: badgeIcons, badgeInfo: badgeInfo, avatar: avatar, avatarF: avatarF, flag: flag, cname: cname, tag: tag, tierLabel: tierLabel, badge: badge, glyph: glyph, esc: esc, placed: placed,
     seasonLeft: seasonLeft, nextLabel: nextLabel, badgeIcon: badgeIcon, sidText: sidText, statusText: statusText, linkInfo: linkInfo, openUrl: openUrl, ago: ago };
 })(this);
 
@@ -4851,6 +5085,8 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         case 'no_player': r = t('sys_no_player', { r: d.ref || '' }); break;
         case 'owner_new': r = t('sys_owner_new', { n: d.name || '', id: PX.sidText(d.sid) }); break;
         case 'help': r = plain ? t('sys_help_short') : t('sys_help'); break;
+        case 'donor': r = t('sys_donor', { t: t('bd_' + (d.t || 1)) }); break;
+        case 'donation': r = t('sys_donation', { n: d.name || '', id: PX.sidText(d.sid), t: d.t, source: d.source || '' }); break;
         default: r = t('sys_' + k);
       }
       return plain ? String(r).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : r;
@@ -4894,6 +5130,9 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         (p.bannedUntil ? ' · ' + t('mcBanned', { d: until(p.bannedUntil) }) : '') + (p.mutedUntil ? ' · ' + t('mcMuted', { d: until(p.mutedUntil) }) : '') + '</div>' +
         (p.link ? '<p class="mc-from">' + PX.glyph('#i-link') + ' ' + esc(p.link) + '</p>' : '') +
         this.actionButtons(p, null) +
+        '<div class="ab-row"><span>' + PX.badgeIcon({ k: 'donor', t: 3 }, 18) + '</span>' + [1, 2, 3].map(function (n) {
+          return '<button class="ab' + ((p.donor || 0) >= n ? ' on' : '') + '" data-act="donor" data-dur="' + n + '" data-target="' + esc(p.id) + '">' + t('bd_' + n) + '</button>';
+        }).join('') + '</div>' +
         '<div class="ab-row wide">' + (p.rawBadge === 'inf' ? '<button class="ab" data-act="unbadge" data-target="' + esc(p.id) + '">' + t('abUnbadge') + '</button>'
           : '<button class="ab inf" data-act="badge" data-target="' + esc(p.id) + '">' + PX.badgeIcon('inf', 16) + t('abBadge') + '</button>') +
         (p.bannedUntil ? '<button class="ab" data-act="unban" data-target="' + esc(p.id) + '">' + t('abUnban') + '</button>' : '') +
@@ -4919,6 +5158,146 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
     }
   };
   root.Community = C;
+})(this);
+
+</script>
+<script>
+/* REVERSE — badges everywhere (the menu player chip, the badge sheet, the profile stand) and the supporter shop. */
+(function (root) {
+  'use strict';
+  var t = I18N.t;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return PX.esc(s); };
+  var SKU = ['', 'support_1', 'support_2', 'support_3'];
+
+  var B = {
+    shop: null,
+    init: function () {
+      var self = this;
+      // any badge, anywhere: tap it to see what it is
+      document.addEventListener('click', function (e) {
+        var b = e.target.closest('.bdg[data-b]');
+        if (!b || e.target.closest('.bslot') || e.target.closest('#ovBadge')) return;
+        e.preventDefault(); e.stopPropagation();
+        try { self.openBadge(JSON.parse(b.getAttribute('data-b'))); } catch (x) { }
+      }, true);
+      $('meChip').onclick = function () { Social.openProfile(); };
+      $('bShop').onclick = function () { self.openShop(); };
+      $('shBack').onclick = function () { UI.back(); };
+      Net.on('me', function () { self.paintChip(); if (UI.screen === 'shop') self.renderShop(); });
+      Net.on('status', function () { self.paintChip(); });
+      Net.on('shop', function (m) { self.shop = m; if (UI.screen === 'shop') self.renderShop(); });
+      Net.on('purchase', function (m) {
+        self.buying = null; if (UI.screen === 'shop') self.renderShop();
+        if (m.ok) { Sound.play('reward'); FX.buzz([20, 40, 20]); self.openBadge({ k: 'donor', t: m.tier }, true); }
+        else UI.toast('#i-x', t('buyFail'), t('buyFail_' + (m.reason === 'not_configured' ? 'cfg' : 'x')));
+      });
+      // the Android app reports Google Play results here
+      root.__onPurchase = function (sku, token) { if (token) Net.send({ type: 'purchase', sku: sku, token: token, platform: 'play' }); };
+      root.__onPurchaseFail = function (code) { self.buying = null; if (UI.screen === 'shop') self.renderShop(); if (code !== 'cancel') UI.toast('#i-x', t('buyFail'), ''); };
+      this.paintChip();
+    },
+
+    /* ---------- the player chip on the menu: avatar, name, league, badges ---------- */
+    paintChip: function () {
+      var me = Net.me, el = $('meChip');
+      if (!el) return;
+      if (!me) { el.innerHTML = '<span class="ava ghost" style="--s:34px"></span><span class="mch"><b>' + esc(Profile.name()) + '</b><small>' + t(Net.status === 'online' ? 'loading' : 'offlineChip') + '</small></span>'; return; }
+      el.innerHTML = PX.avatarF(me, 34) + '<span class="mch"><b>' + PX.tag(me, 16) + '</b><small>' + PX.tierLabel(me) + (PX.placed(me) ? ' · ' + I18N.fmt(me.rating) : '') + '</small></span>';
+    },
+
+    /* ---------- one badge, big ---------- */
+    openBadge: function (b, fresh) {
+      var info = PX.badgeInfo(b), rare = ['rareMythic', 'rareLegend', 'rareEpic', 'rareRare', 'rareCommon'][info.rare] || 'rareRare';
+      $('bgArt').innerHTML = '<i class="bg-glow k-' + b.k + '"></i>' + PX.badgeIcon(b, 128, true);
+      $('bgName').textContent = info.name;
+      $('bgRare').className = 'bg-rare r' + info.rare; $('bgRare').textContent = t(rare);
+      $('bgText').textContent = info.text;
+      $('bgNote').textContent = fresh ? t('bdThanks') : info.note || '';
+      var act = $('bgAct');
+      if (b.locked && b.k === 'donor') { act.textContent = t('toShop'); act.onclick = function () { UI.close(); B.openShop(); }; }
+      else { act.textContent = t('gotIt'); act.onclick = function () { UI.close(); }; }
+      UI.open('badge');
+      if (fresh) { Sound.play('ach'); }
+    },
+
+    /* ---------- the stand in a profile ---------- */
+    standHTML: function (p, mine) {
+      var have = PX.badgeList(p).length ? (p.badges || []) : (p.badge ? [{ k: p.badge }] : []);
+      var items = have.slice();
+      if (mine) {
+        if (!have.some(function (b) { return b.k === 'donor'; })) items.push({ k: 'donor', t: 1, locked: true });
+        if (!have.some(function (b) { return b.k === 'season'; })) items.push({ k: 'season', r: 100, s: Net.season ? Net.season.id : '2026-10', locked: true });
+        if (!have.some(function (b) { return b.k === 'inf'; })) items.push({ k: 'inf', locked: true });
+      }
+      if (!items.length) return '';
+      return '<h3 class="sec">' + t('standTitle') + (have.length ? ' · ' + have.length : '') + '</h3><div class="stand">' + items.map(function (b) {
+        var info = PX.badgeInfo(b);
+        return '<button class="bslot' + (b.locked ? ' locked' : '') + '" data-b="' + esc(JSON.stringify(b)) + '"><span class="ped">' + PX.badgeIcon(b, 54, !b.locked) + '</span>' +
+          '<span class="bl">' + esc(b.locked ? t('lockedName_' + b.k) : info.name) + '</span></button>';
+      }).join('') + '</div>';
+    },
+    wireStand: function (box) {
+      var self = this;
+      box.querySelectorAll('.bslot').forEach(function (s) {
+        s.onclick = function () {
+          var b = JSON.parse(s.getAttribute('data-b'));
+          if (b.locked) {
+            if (b.k === 'donor') return self.openShop();
+            var info = { season: ['bs_4', 'bsHow'], inf: ['badge_inf', 'bText_inf'] }[b.k];
+            return self.openBadge(b);
+          }
+          self.openBadge(b);
+        };
+      });
+    },
+
+    /* ---------- shop ---------- */
+    openShop: function () {
+      if (UI.screen !== 'shop') Social.push();
+      UI.show('shop'); Net.connect();
+      this.renderShop();
+      if (Net.ready()) Net.send({ type: 'shop' });
+    },
+    platform: function () {
+      if (root.Android && Android.billingBuy) return 'play';
+      if (root.Android) return 'android';
+      return 'web';
+    },
+    renderShop: function () {
+      var self = this, me = Net.me, d = this.shop, tier = me ? me.donor || 0 : 0, plat = this.platform();
+      var cur = (I18N.get() === 'ru') ? 'RUB' : 'USD';
+      var h = '<div class="sh-hero"><div class="sh-hearts">' + PX.badgeIcon({ k: 'donor', t: 1 }, 54, true) + PX.badgeIcon({ k: 'donor', t: 3 }, 84, true) + PX.badgeIcon({ k: 'donor', t: 2 }, 54, true) + '</div>' +
+        '<h2>' + t('shopHero') + '</h2><p>' + t('shopText') + '</p></div>';
+      h += [1, 2, 3].map(function (n) {
+        var prod = d && d.products ? d.products.filter(function (x) { return x.tier === n; })[0] : null;
+        var price = self.prices && self.prices[SKU[n]] ? self.prices[SKU[n]] : prod ? prod.price[cur] : '';
+        var owned = tier >= n, busy = self.buying === SKU[n];
+        return '<div class="tier t' + n + (owned ? ' owned' : '') + '"><div class="tr-art">' + PX.badgeIcon({ k: 'donor', t: n }, 76, true) + '</div>' +
+          '<div class="tr-body"><b>' + t('bd_' + n) + '</b><ul>' + t('perks_' + n).split('|').map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' +
+          '<button class="tr-buy" data-n="' + n + '"' + (owned || busy ? ' disabled' : '') + '>' + (owned ? PX.glyph('#i-check') + t('owned') : busy ? t('buying') : esc(price || t('buy'))) + '</button></div></div>';
+      }).join('');
+      h += '<p class="sh-note">' + t('shopNote') + '</p>';
+      if (plat === 'android') h += '<p class="sh-note warn">' + t('shopSoon') + '</p>';
+      if (plat === 'web' && !(d && d.donateUrl)) h += '<p class="sh-note warn">' + t('shopSoonWeb') + '</p>';
+      $('shBody').innerHTML = h;
+      $('shBody').querySelectorAll('.tr-buy').forEach(function (b) { b.onclick = function () { self.buy(+b.getAttribute('data-n')); }; });
+      if (plat === 'play' && !this.prices && Android.billingPrices) { try { Android.billingPrices(SKU.slice(1).join(',')); } catch (e) { } }
+    },
+    buy: function (n) {
+      var me = Net.me, plat = this.platform(), d = this.shop;
+      if (!me) { Net.connect(); UI.toast('#i-wifi', t('netWait'), t('netWaitSub')); return; }
+      if (plat === 'play') { this.buying = SKU[n]; this.renderShop(); try { Android.billingBuy(SKU[n]); } catch (e) { this.buying = null; this.renderShop(); } return; }
+      if (plat === 'web' && d && d.donateUrl) {
+        UI.confirm(t('donateAsk', { n: t('bd_' + n) }), t('donateText', { id: PX.sidText(me.sid) }), t('donateGo'), function () { PX.openUrl(d.donateUrl); });
+        return;
+      }
+      UI.toast('#i-gift', t('shopSoonT'), plat === 'android' ? t('shopSoon') : t('shopSoonWeb'));
+    }
+  };
+  // Android reports localized Google Play prices here: {"support_1":"99 ₽", ...}
+  root.__onPrices = function (json) { try { B.prices = JSON.parse(json); if (UI.screen === 'shop') B.renderShop(); } catch (e) { } };
+  root.Badges = B;
 })(this);
 
 </script>
@@ -4981,6 +5360,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
       Duel.init();
       Social.init();
       Community.init();
+      Badges.init();
       this.applySettings();
       document.addEventListener('pointerdown', function () {
         Sound.init();
@@ -5137,7 +5517,7 @@ this.COUNTRY_CODES = "AC AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB B
         this.close(); return;
       }
       if (this.screen === 'online') { this.show('menu'); return; }
-      if (/^(profile|top|friends|chat|dm)$/.test(this.screen)) { Social.back(); return; }
+      if (/^(profile|top|friends|chat|dm|shop)$/.test(this.screen)) { Social.back(); return; }
       if (this.screen === 'game') { this.pause(); return; }
       if (this.screen === 'menu') { try { if (root.Android && Android.exit) Android.exit(); } catch (e) { } }
     },

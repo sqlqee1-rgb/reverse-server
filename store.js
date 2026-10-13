@@ -19,7 +19,7 @@ function fresh(name, cc, season) {
   return {
     acc: { id, name, cc: cc || null, ccChangedAt: null, avatar: crypto.randomBytes(1)[0] % 96, createdAt: Date.now(),
       rating: R.START, peak: R.START, games: 0, wins: 0, losses: 0, draws: 0, koWins: 0, streak: 0, bestStreak: 0,
-      season, sGames: 0, sWins: 0, sPeak: R.START },
+      season, sGames: 0, sWins: 0, sPeak: R.START, donor: 0 },
     secret, recovery, secretHash: sha(secret), recoveryHash: sha(normCode(recovery)),
   };
 }
@@ -102,6 +102,8 @@ class MemoryStore {
   async reportsBy(src, since) { return this.reps.filter((r) => r.src === src && r.at > since).length; }
   async openReportOf(src, target) { const r = this.reps.find((q) => q.src === src && q.target === target && q.state === 'open'); return r ? { ...r } : null; }
   async getMeta(k) { return this.meta.get(k) || null; }
+  async seasonBadges() { return this.seasons.filter((x) => x.rank <= 100).map((x) => ({ account: x.account, season: x.season, rank: x.rank })); }
+  async addPurchase(token, account, sku, source) { this.buys = this.buys || new Map(); if (this.buys.has(token)) return false; this.buys.set(token, { account, sku, source }); return true; }
   async setMeta(k, v) { this.meta.set(k, String(v)); }
   async pairCount(x, y, since) { return this.matches.filter((m) => m.at > since && ((m.a === x && m.b === y) || (m.a === y && m.b === x))).length; }
   _board(season, cc) {
@@ -148,7 +150,7 @@ const COLS = {
   rating: 'rating', peak: 'peak', games: 'games', wins: 'wins', losses: 'losses', draws: 'draws', koWins: 'ko_wins',
   streak: 'streak', bestStreak: 'best_streak', season: 'season', sGames: 's_games', sWins: 's_wins', sPeak: 's_peak',
   sid: 'sid', role: 'role', badge: 'badge', link: 'link', creatorOn: 'creator_on', bannedUntil: 'banned_until', banReason: 'ban_reason',
-  mutedUntil: 'muted_until', lastSeen: 'last_seen',
+  mutedUntil: 'muted_until', lastSeen: 'last_seen', donor: 'donor',
 };
 const TIMES = new Set(['ccChangedAt', 'bannedUntil', 'mutedUntil', 'lastSeen']);
 const SELECT = Object.entries(COLS).map(([k, c]) => (c === k ? c : `${c} AS "${k}"`)).join(', ');
@@ -203,7 +205,9 @@ class PgStore {
       CREATE INDEX IF NOT EXISTS messages_src ON messages (src, id DESC);
       CREATE TABLE IF NOT EXISTS reports (id BIGSERIAL PRIMARY KEY, at TIMESTAMPTZ NOT NULL DEFAULT now(), src TEXT NOT NULL, target TEXT NOT NULL,
         reason TEXT NOT NULL, comment TEXT, context TEXT, state TEXT NOT NULL DEFAULT 'open', action TEXT, msg BIGINT);
-      CREATE INDEX IF NOT EXISTS reports_target ON reports (target);`);
+      CREATE INDEX IF NOT EXISTS reports_target ON reports (target);
+      ALTER TABLE accounts ADD COLUMN IF NOT EXISTS donor INT NOT NULL DEFAULT 0;
+      CREATE TABLE IF NOT EXISTS purchases (token TEXT PRIMARY KEY, account TEXT NOT NULL, sku TEXT NOT NULL, at TIMESTAMPTZ NOT NULL DEFAULT now(), source TEXT NOT NULL);`);
     // accounts made before short ids existed get one now
     const missing = (await this.q(`SELECT id FROM accounts WHERE sid IS NULL`)).rows;
     for (const r of missing) await this._setSid(r.id);
@@ -353,6 +357,12 @@ class PgStore {
   async reportsBy(src, since) { return (await this.q(`SELECT count(*)::int AS n FROM reports WHERE src = $1 AND at > $2`, [src, new Date(since)])).rows[0].n; }
   async openReportOf(src, target) { return this._rep((await this.q(`SELECT * FROM reports WHERE src = $1 AND target = $2 AND state = 'open' LIMIT 1`, [src, target])).rows[0]) || null; }
   async getMeta(k) { const r = await this.q(`SELECT v FROM meta WHERE k = $1`, [k]); return r.rows[0] ? r.rows[0].v : null; }
+  // season placements that earn a badge (top 100 of the world)
+  async seasonBadges() { return (await this.q(`SELECT account, season, rank FROM season_results WHERE rank <= 100`)).rows; }
+  async addPurchase(token, account, sku, source) {
+    const r = await this.q(`INSERT INTO purchases (token, account, sku, source) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`, [token, account, sku, source]);
+    return r.rowCount > 0;
+  }
   async setMeta(k, v) { await this.q(`INSERT INTO meta (k, v) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v`, [k, String(v)]); }
   async idByCode(code) {
     const r = await this.q(`SELECT id FROM accounts WHERE recovery_hash = $1`, [sha(normCode(code))]);
