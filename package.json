@@ -4,7 +4,16 @@
   "private": true,
   "description": "Realtime 1v1 duels for Reverse. Server-authoritative: replays every move with the shared game logic.",
   "main": "index.js",
-  "scripts": { "start": "node index.js", "test": "node test.js" },
-  "engines": { "node": ">=18" },
-  "dependencies": { "ws": "^8.18.0" }
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "geoip-country": "^5.0.202610100242",
+    "pg": "^8.23.1",
+    "ws": "^8.18.0"
+  }
 }

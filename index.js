@@ -16,6 +16,13 @@ const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 // shared rules: the standalone server repo ships a copy next to this file, the game repo uses the client's file
 const L = (() => { try { return require('./logic.js'); } catch (e) { return require('../web/js/logic.js'); } })();
+const R = (() => { try { return require('./rank.js'); } catch (e) { return require('../web/js/rank.js'); } })();
+const Store = require('./store.js');
+const BotsLib = require('./bots.js');
+const createSocial = require('./social.js');
+let store = Store.create(process.env.DATABASE_URL);
+let geo = null; try { geo = require('geoip-country'); } catch (e) { console.log('geoip-country not installed'); }
+let COUNTRIES = null; try { COUNTRIES = new Set(Object.keys(require('countries-list').countries)); } catch (e) { }
 
 const PORT = +process.env.PORT || 8080;
 const ADMIN_KEY = String(process.env.ADMIN_KEY || '');
@@ -23,18 +30,24 @@ function isBoss(key) {
   if (!ADMIN_KEY || typeof key !== 'string' || key.length !== ADMIN_KEY.length) return false;
   return crypto.timingSafeEqual(Buffer.from(key), Buffer.from(ADMIN_KEY));
 }
-const PROTOCOL = 1;
+const PROTOCOL = 2;
 const COUNTDOWN = 3000;
 const DURATION = L.BALANCE.duel.seconds * 1000;
 const GRACE = 25000;          // how long a dropped player keeps their seat
 const REMATCH_WINDOW = 30000;
 const ROOM_TTL = 10 * 60000;
+const BOT_WAIT = [6000, 14000];  // if nobody fits by then, a bot of the same level takes the game
 
 const players = new Map();    // id -> Player
 const byToken = new Map();    // token -> Player
 const rooms = new Map();      // code -> { host, at }
 const matches = new Set();
-let queue = [];
+const byAcc = new Map();      // account id -> Player (one live seat per account)
+let queue = [];               // casual: first come, first served
+let ranked = [];              // ranked: { p, since }, paired by rating with a widening window
+let season = R.seasonId();
+const bots = new BotsLib.Bots(store, () => season);
+
 const startedAt = Date.now();
 let totalMatches = 0;
 
@@ -47,6 +60,14 @@ function cleanName(s) {
   if (s.length < 2 || BAD_WORDS.test(s.replace(/[\s._*-]/g, ''))) return 'Player';
   return s;
 }
+const isOwnerCode = (k) => isBoss(k);
+const social = createSocial({
+  R, bots, players, byAcc, BAD_WORDS, cleanName, isBoss,
+  store: () => store,
+  busy: (p) => busy(p), freeUp: (p) => freeUp(p), meMsg: (p) => meMsg(p), inQueue: (p) => inQueue(p),
+  newMatch: (a, b) => new Match(a, b),
+  onChange: () => topCache.clear(), topChanged: () => topCache.clear(),
+});
 function mulberry(seed) {
   let a = seed >>> 0;
   return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -54,18 +75,28 @@ function mulberry(seed) {
 const compact = (st) => st.board.map((t) => (t ? t.v : -1));
 
 class Player {
-  constructor(ws, name, bot) {
-    this.id = rid(6); this.token = rid(16); this.name = cleanName(name); this.ws = ws; this.bot = !!bot;
-    this.match = null; this.side = 0; this.room = null; this.offlineAt = 0; this.rate = { t: 0, n: 0 };
-    if (!bot) { players.set(this.id, this); byToken.set(this.token, this); }
+  constructor(ws, acc, bot) {
+    this.id = rid(6); this.token = rid(16); this.ws = ws; this.bot = !!bot; this.acc = acc || null;
+    this.name = acc ? acc.name : 'bot';
+    this.match = null; this.side = 0; this.room = null; this.offlineAt = 0; this.rate = { t: 0, n: 0 }; this.lastOpp = null; this.recent = [];
+    this.blocked = new Set();
+    this.level = 0.5;   // bots: 0 weakest .. 1 strongest; the training bot sits in the middle
+    if (!bot) { players.set(this.id, this); byToken.set(this.token, this); if (acc) byAcc.set(acc.id, this); }
+  }
+  card() {
+    if (this.bot && !this.acc) return { bot: true, name: 'bot', avatar: this.avatar || 0 };
+    const a = this.acc;
+    return { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, sGames: a.sGames, games: a.games, wins: a.wins, streak: a.streak,
+      badge: social.badgeOf(a) };
   }
   send(o) { if (this.ws && this.ws.readyState === 1) this.ws.send(JSON.stringify(o)); }
   get online() { return this.bot || (this.ws && this.ws.readyState === 1); }
 }
 
 class Match {
-  constructor(a, b) {
+  constructor(a, b, opts) {
     this.id = rid(5);
+    this.ranked = !!(opts && opts.ranked) && !!a.acc && !!b.acc;
     this.seed = crypto.randomBytes(4).readUInt32LE(0);
     this.p = [a, b];
     this.st = [0, 1].map(() => L.newGame({ mode: 'duel', seed: this.seed, rules: L.DUEL_RULES }));
@@ -75,6 +106,8 @@ class Match {
     this.over = false; this.result = null; this.wantRematch = [false, false];
     a.match = this; a.side = 0; b.match = this; b.side = 1;
     removeFromQueue(a); removeFromQueue(b); closeRoom(a); closeRoom(b);
+    for (const [x, y] of [[a, b], [b, a]]) if (y.acc) { x.lastOpp = y.acc.id; x.recent = [y.acc.id, ...x.recent.filter((i) => i !== y.acc.id)].slice(0, 3); }
+    for (const x of this.p) if (x.bot && x.acc) bots.busy.add(x.acc.id);
     matches.add(this); totalMatches++;
     this.timer = setTimeout(() => this.finish('time'), this.endAt - now());
     this.p.forEach((p, side) => p.send(this.startMsg(side)));
@@ -83,8 +116,8 @@ class Match {
   }
   startMsg(side) {
     const o = this.p[1 - side];
-    return { type: 'start', id: this.id, seed: this.seed, side, countdown: Math.max(0, this.startAt - now()), duration: DURATION,
-      you: { name: this.p[side].name }, opp: { name: o.name, bot: o.bot } };
+    return { type: 'start', id: this.id, seed: this.seed, side, ranked: this.ranked, countdown: Math.max(0, this.startAt - now()), duration: DURATION,
+      you: this.p[side].card(), opp: o.card() };
   }
   oppMsg(side) {
     const st = this.st[side];
@@ -92,12 +125,14 @@ class Match {
   }
   resumeMsg(side) {
     const o = 1 - side;
-    return { type: 'resume', id: this.id, seed: this.seed, side, you: { name: this.p[side].name },
-      opp: { name: this.p[o].name, bot: this.p[o].bot, online: this.p[o].online }, state: this.st[side], seq: this.seq[side],
+    return { type: 'resume', id: this.id, seed: this.seed, side, ranked: this.ranked, duration: DURATION, you: this.p[side].card(),
+      opp: { ...this.p[o].card(), online: this.p[o].online }, state: this.st[side], seq: this.seq[side],
       pending: this.pend[side], oppState: this.oppMsg(o), countdown: Math.max(0, this.startAt - now()), left: Math.max(0, this.endAt - now()),
       over: this.over, result: this.over ? this.endMsg(side) : null };
   }
 
+  // owner mode never applies to ranked games
+  boss(side) { return !this.ranked && !!this.p[side].boss; }
   move(p, m) {
     if (this.over) return;
     const side = p.side, st = this.st[side], other = this.p[1 - side];
@@ -106,7 +141,7 @@ class Match {
     let ev = null;
     if (m.a === 'place' && Number.isInteger(m.c) && m.c >= 0 && m.c < 25 && !st.board[m.c]) {
       ev = L.place(st, m.c);
-      if (ev && p.boss) L.bossAssist(st, ev);
+      if (ev && this.boss(side)) L.bossAssist(st, ev);
     }
     else if (m.a === 'rev') ev = L.toggleReverse(st);
     else if (m.a === 'swap') ev = L.swap(st);
@@ -115,11 +150,11 @@ class Match {
     let sent = 0, cancel = 0, garbage = [];
     if (m.a === 'place') {
       let a = L.attack(ev);
-      if (p.boss) a = Math.min(L.BALANCE.duel.maxHit + 2, a * 2 + (ev.some((e) => e.type === 'merge') ? 1 : 0));
+      if (this.boss(side)) a = Math.min(L.BALANCE.duel.maxHit + 2, a * 2 + (ev.some((e) => e.type === 'merge') ? 1 : 0));
       cancel = Math.min(a, this.pend[side]); this.pend[side] -= cancel; a -= cancel;
       if (a > 0) {
         this.sent[side] += a; sent = a;
-        if (!other.boss) {   // attacks on the owner look sent but never land
+        if (!this.boss(1 - side)) {   // attacks on the owner look sent but never land
           this.pend[1 - side] += a;
           other.send({ type: 'incoming', n: a, pending: this.pend[1 - side] });
         }
@@ -145,30 +180,44 @@ class Match {
     this.over = true;
     clearTimeout(this.timer); clearTimeout(this.botTimer);
     if (reason === 'time') {
-      const bs = this.p.findIndex((x) => x.boss);
+      const bs = this.ranked ? -1 : this.p.findIndex((x) => x.boss);
       if (bs >= 0 && !this.p[1 - bs].boss && this.st[bs].score <= this.st[1 - bs].score)
         this.st[bs].score = this.st[1 - bs].score + 2 * (5 + Math.floor(Math.random() * 60));
       const a = this.st[0].score, b = this.st[1].score;
       winner = a === b ? -1 : (a > b ? 0 : 1);
     }
     this.result = { reason, winner };
-    this.p.forEach((p, side) => p.send(this.endMsg(side)));
     this.closeTimer = setTimeout(() => this.close(), REMATCH_WINDOW);
-    console.log(`match ${this.id} ${reason} ${this.st[0].score}:${this.st[1].score}${this.p[1].bot ? ' (bot)' : ''}`);
+    console.log(`match ${this.id} ${this.ranked ? 'ranked ' : ''}${reason} ${this.st[0].score}:${this.st[1].score}${this.p[1].bot ? ' (bot)' : ''}`);
+    const send = () => this.p.forEach((p, side) => { p.send(this.endMsg(side)); if (this.rating && p.acc) p.send(meMsg(p)); });
+    if (this.ranked) this.settle().catch((e) => console.error('rating update failed', e)).then(send); else send();
+  }
+  // ranked: Elo update for both accounts, one transaction with the match record
+  async settle() {
+    const [A, B] = this.p.map((p) => p.acc), w = this.result.winner;
+    const mult = BotsLib.farmMult(await store.pairCount(A.id, B.id, now() - 864e5));   // the same two accounts farming each other
+    const { dA, dB, before } = BotsLib.applyResult(A, B, w, this.result.reason, mult);
+    await store.saveMatch({ id: this.id, season: A.season, reason: this.result.reason, winner: w, a: A.id, b: B.id, aName: A.name, bName: B.name,
+      aCc: A.cc, bCc: B.cc, aAvatar: A.avatar, bAvatar: B.avatar, aScore: this.st[0].score, bScore: this.st[1].score,
+      aRating: before[0], bRating: before[1], aDelta: dA, bDelta: dB }, A, B);
+    this.rating = [{ before: before[0], after: A.rating, delta: dA, sGames: A.sGames, capped: mult < 1 },
+      { before: before[1], after: B.rating, delta: dB, sGames: B.sGames, capped: mult < 1 }];
+    topCache.clear();
   }
   endMsg(side) {
     const w = this.result.winner;
-    return { type: 'end', result: w === -1 ? 'draw' : (w === side ? 'win' : 'lose'), reason: this.result.reason,
+    return { type: 'end', ranked: this.ranked, result: w === -1 ? 'draw' : (w === side ? 'win' : 'lose'), reason: this.result.reason,
       you: { score: this.st[side].score, max: this.st[side].maxTile, sent: this.sent[side] },
-      opp: { score: this.st[1 - side].score, max: this.st[1 - side].maxTile, sent: this.sent[1 - side] }, rematch: REMATCH_WINDOW };
+      opp: { score: this.st[1 - side].score, max: this.st[1 - side].maxTile, sent: this.sent[1 - side] }, rematch: this.ranked ? 0 : REMATCH_WINDOW,
+      rating: this.rating ? this.rating[side] : null };
   }
   close() {
     clearTimeout(this.closeTimer); clearTimeout(this.timer); clearTimeout(this.botTimer);
     matches.delete(this);
-    this.p.forEach((p) => { if (p.match === this) p.match = null; });
+    this.p.forEach((p) => { if (p.match === this) p.match = null; if (p.bot && p.acc) bots.busy.delete(p.acc.id); });
   }
   rematch(p) {
-    if (!this.over) return;
+    if (!this.over || this.ranked) return;   // ranked pairs always go back through matchmaking
     this.wantRematch[p.side] = true;
     const o = this.p[1 - p.side];
     if (o.bot) this.wantRematch[1 - p.side] = true;
@@ -176,6 +225,7 @@ class Match {
     if (this.wantRematch[0] && this.wantRematch[1] && this.p.every((x) => x.online)) {
       const [a, b] = this.p;
       this.close();
+      if (b.bot && !b.acc) b.avatar = (b.avatar + 13) % 96;
       new Match(b.bot ? a : b, b.bot ? b : a); // swap sides each rematch, bots stay second
     }
   }
@@ -194,65 +244,143 @@ class Match {
       const st = this.st[side];
       const wait = this.startAt - now();
       if (wait > 0) { this.botTimer = setTimeout(tick, wait + 400); return; }
-      const cell = botPick(st);
+      const me = this.p[side], cell = BotsLib.pick(st, me.level);
       if (cell == null) return;
-      this.move(this.p[side], { seq: this.seq[side] + 1, a: 'place', c: cell });
-      if (!this.over) this.botTimer = setTimeout(tick, 950 + Math.random() * 900);
+      this.move(me, { seq: this.seq[side] + 1, a: 'place', c: cell });
+      if (!this.over) this.botTimer = setTimeout(tick, BotsLib.thinkTime(me.level));
     };
-    this.botTimer = setTimeout(tick, Math.max(0, this.startAt - now()) + 700);
+    this.botTimer = setTimeout(tick, Math.max(0, this.startAt - now()) + 500 + Math.random() * 900);
   }
   botNudge() { /* the bot keeps its own rhythm; hook left for difficulty tuning */ }
 }
 
-function botPick(st) {
-  const e = L.empties(st);
-  if (!e.length) return null;
-  if (Math.random() < 0.55) {
-    let best = -1, bc = e[0];
-    for (const c of e) { const p = L.preview(st, c); const v = p.pts + Math.random() * 4; if (v > best) { best = v; bc = c; } }
-    return bc;
-  }
-  const v = st.queue[0], near = e.filter((c) => L.NB[c].some((n) => st.board[n] && st.board[n].v === v));
-  const pool = near.length ? near : e;
-  return pool[(Math.random() * pool.length) | 0];
-}
-
 /* ---------- lobby ---------- */
-function removeFromQueue(p) { queue = queue.filter((x) => x !== p); }
+function removeFromQueue(p) { queue = queue.filter((x) => x !== p); ranked = ranked.filter((e) => e.p !== p); p.botAt = 0; }
 function closeRoom(p) { if (p.room) { rooms.delete(p.room); p.room = null; } }
 function newCode() { let c; do { c = String(1000 + Math.floor(Math.random() * 9000)); } while (rooms.has(c)); return c; }
-function onlineCount() { let n = 0; for (const p of players.values()) if (p.online) n++; return n; }
+function onlineCount() { return social.onlineCount(); }   // people online plus bots that are "online" on their schedule
+function humansOnline() { let n = 0; for (const p of players.values()) if (p.online) n++; return n; }
+const inQueue = (p) => queue.includes(p) || ranked.some((e) => e.p === p);
+const banned = (p) => p.acc && p.acc.bannedUntil > now();
+const busy = (p) => p.match && !p.match.over;
+function freeUp(p) { if (p.match) p.match.leave(p); removeFromQueue(p); closeRoom(p); }
 
-function handle(p, m) {
+function meMsg(p) {
+  const a = p.acc;
+  return { type: 'me', season: { id: season, n: R.seasonNumber(season), ends: R.seasonEnd(season) },
+    me: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, ccChangedAt: a.ccChangedAt, avatar: a.avatar, rating: a.rating, peak: a.peak, games: a.games,
+      wins: a.wins, losses: a.losses, draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak,
+      sGames: a.sGames, sWins: a.sWins, sPeak: a.sPeak, badge: social.badgeOf(a), owner: social.isOwner(a), creatorOn: a.creatorOn !== false, link: a.link || null,
+      bannedUntil: a.bannedUntil > now() ? a.bannedUntil : null, mutedUntil: a.mutedUntil > now() ? a.mutedUntil : null } };
+}
+
+/* matchmaking: the oldest waiting player gets the closest rating inside both players' windows;
+   the window starts at ±100 and widens 25 per second, after a minute anyone fits */
+function windowOf(e, t) { const w = (t - e.since) / 1000; return w >= 60 ? Infinity : 100 + 25 * w; }
+function matchmake() {
+  const t = now();
+  ranked = ranked.filter((e) => e.p.online && !busy(e.p));
+  ranked.sort((x, y) => x.since - y.since);
+  const used = new Set();
+  for (const e of ranked) {
+    if (used.has(e)) continue;
+    let best = null, bd = Infinity;
+    for (const f of ranked) {
+      if (f === e || used.has(f) || f.p.acc.id === e.p.acc.id) continue;
+      const d = Math.abs(e.p.acc.rating - f.p.acc.rating);
+      if (d > windowOf(e, t) || d > windowOf(f, t)) continue;
+      // avoid instant re-pairing with the last opponent while others might come
+      const again = e.p.lastOpp === f.p.acc.id && t - e.since < 30000 ? 400 : 0;
+      if (d + again < bd) { bd = d + again; best = f; }
+    }
+    if (best) { used.add(e); used.add(best); new Match(e.p, best.p, { ranked: true }); }
+  }
+  // nobody close enough came in time: a bot of the same level takes the game (ranked counts as usual)
+  for (const e of ranked) {
+    if (used.has(e) || t < e.botAt) continue;
+    if (botMatch(e.p, true)) used.add(e);
+  }
+  ranked = ranked.filter((e) => !used.has(e));
+  for (const p of queue.slice()) if (p.botAt && t >= p.botAt && p.online && !busy(p)) botMatch(p, false);
+  for (const e of ranked) {
+    const w = windowOf(e, t);
+    e.p.send({ type: 'queued', mode: 'ranked', wait: t - e.since, window: w === Infinity ? null : Math.round(w), n: ranked.length });
+  }
+}
+
+function botMatch(p, isRanked) {
+  const acc = bots.pick(p.acc.rating, new Set(p.recent));
+  if (!acc) return false;
+  const bp = new Player(null, acc, true); bp.level = bots.level(acc);
+  if (Math.random() < 0.5) new Match(p, bp, { ranked: isRanked }); else new Match(bp, p, { ranked: isRanked });
+  return true;
+}
+
+/* leaderboards are cached briefly: every finished ranked match clears the cache */
+const topCache = new Map();
+async function topList(cc) {
+  const key = season + ':' + (cc || '*'), hit = topCache.get(key);
+  if (hit && now() - hit.t < 15000) return hit.list;
+  const list = (await store.top(season, cc, 100)).map((a, i) => ({ pos: i + 1, id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar,
+    rating: a.rating, sGames: a.sGames, sWins: a.sWins, badge: social.badgeOf(a) }));
+  topCache.set(key, { t: now(), list });
+  return list;
+}
+async function profileOf(id) {
+  const a = await store.get(id);
+  if (!a) return null;
+  const [world, country, history, seasons] = await Promise.all([store.position(a, null), a.cc ? store.position(a, a.cc) : null,
+    store.history(a.id, 15), store.seasonsOf(a.id)]);
+  return {
+    p: { id: a.id, sid: a.sid, name: a.name, cc: a.cc, avatar: a.avatar, rating: a.rating, peak: a.peak, games: a.games, wins: a.wins, losses: a.losses,
+      draws: a.draws, koWins: a.koWins, streak: a.streak, bestStreak: a.bestStreak, sGames: a.sGames, sWins: a.sWins, sPeak: a.sPeak, createdAt: a.createdAt,
+      badge: social.badgeOf(a), link: social.badgeOf(a) ? a.link || null : null, status: social.statusOf(byAcc.get(a.id) ? byAcc.get(a.id).acc : a) },
+    world, country, seasons,
+    history: history.map((m) => {
+      const me = m.a === a.id ? 'a' : 'b', op = me === 'a' ? 'b' : 'a', side = me === 'a' ? 0 : 1;
+      return { at: m.at, reason: m.reason, result: m.winner === -1 ? 'draw' : m.winner === side ? 'win' : 'lose',
+        score: m[me + 'Score'], oppScore: m[op + 'Score'], delta: m[me + 'Delta'], rating: m[me + 'Rating'],
+        opp: { id: m[op], name: m[op + 'Name'], cc: m[op + 'Cc'], avatar: m[op + 'Avatar'], rating: m[op + 'Rating'] } };
+    }),
+  };
+}
+
+async function handle(p, m) {
+  if (await social.handle(p, m) !== false) return;
+  if (['queue', 'bot', 'room_create', 'room_join'].includes(m.type) && banned(p)) return p.send({ type: 'error', code: 'banned', until: p.acc.bannedUntil });
   switch (m.type) {
     case 'queue':
-      if (p.match && !p.match.over) return;
-      if (p.match) p.match.leave(p);
-      closeRoom(p);
-      if (!queue.includes(p)) queue.push(p);
+      if (busy(p)) return;
+      freeUp(p);
+      if (m.mode === 'ranked') {
+        ranked.push({ p, since: now(), botAt: now() + BOT_WAIT[0] + Math.random() * (BOT_WAIT[1] - BOT_WAIT[0]) });
+        p.send({ type: 'queued', mode: 'ranked', wait: 0, window: 100, n: ranked.length });
+        matchmake();
+        return;
+      }
       queue = queue.filter((x) => x.online);
-      p.send({ type: 'queued', n: queue.length });
+      queue.push(p); p.botAt = now() + BOT_WAIT[0] + Math.random() * (BOT_WAIT[1] - BOT_WAIT[0]);
+      p.send({ type: 'queued', mode: 'casual', n: queue.length });
       if (queue.length >= 2) { const a = queue.shift(), b = queue.shift(); new Match(a, b); }
       return;
-    case 'bot':
-      if (p.match && !p.match.over) return;
-      if (p.match) p.match.leave(p);
-      removeFromQueue(p); closeRoom(p);
-      new Match(p, new Player(null, 'bot', true));
+    case 'bot': {
+      if (busy(p)) return;
+      freeUp(p);
+      const bot = new Player(null, null, true); bot.avatar = Math.floor(Math.random() * 96);
+      new Match(p, bot);
       return;
+    }
     case 'room_create':
-      if (p.match && !p.match.over) return;
-      if (p.match) p.match.leave(p);
-      removeFromQueue(p); closeRoom(p);
+      if (busy(p)) return;
+      freeUp(p);
       p.room = newCode(); rooms.set(p.room, { host: p, at: now() });
       p.send({ type: 'room', code: p.room });
       return;
     case 'room_join': {
       const r = rooms.get(String(m.code || ''));
       if (!r || !r.host.online || r.host === p) return p.send({ type: 'error', code: 'no_room' });
-      if (p.match && !p.match.over) return;
-      if (p.match) p.match.leave(p);
-      removeFromQueue(p); closeRoom(p);
+      if (busy(p)) return;
+      freeUp(p);
       rooms.delete(r.host.room); r.host.room = null;
       new Match(r.host, p);
       return;
@@ -260,11 +388,87 @@ function handle(p, m) {
     case 'cancel': removeFromQueue(p); closeRoom(p); return;
     case 'move': if (p.match) p.match.move(p, m); return;
     case 'sync': if (p.match) p.match.resync(p); return;
-    case 'resign': if (p.match && !p.match.over) p.match.finish('resign', 1 - p.side); return;
+    case 'resign': if (busy(p)) p.match.finish('resign', 1 - p.side); return;
     case 'rematch': if (p.match) p.match.rematch(p); return;
     case 'leave': if (p.match) p.match.leave(p, 'left'); return;
     case 'ping': p.send({ type: 'pong', t: m.t, online: onlineCount() }); return;
+
+    case 'top': {
+      const cc = m.scope === 'country' ? String(m.cc || p.acc.cc || '').toUpperCase().slice(0, 2) : null;
+      if (m.scope === 'country' && !cc) return p.send({ type: 'top', scope: 'country', cc: null, list: [], me: null });
+      const [list, pos] = await Promise.all([topList(cc), store.position(p.acc, cc)]);
+      p.send({ type: 'top', scope: cc ? 'country' : 'world', cc, season: { id: season, n: R.seasonNumber(season), ends: R.seasonEnd(season) },
+        list, me: { pos, rating: p.acc.rating, sGames: p.acc.sGames } });
+      return;
+    }
+    case 'delete_account': {
+      if (p.match && !p.match.over) return p.send({ type: 'error', code: 'busy' });
+      await deleteAccount(p.acc.id);
+      return;
+    }
+    case 'profile': {
+      const id = String(m.id || p.acc.id);
+      if (id === p.acc.id) await flush(p);
+      const prof = await profileOf(id);
+      if (prof && id !== p.acc.id) {
+        const row = (await store.friendRows(p.acc.id)).find((r) => r.a === id || r.b === id);
+        prof.rel = !row ? 'none' : row.state === 'ok' ? 'friend' : row.a === p.acc.id ? 'sent' : 'incoming';
+        prof.blocked = p.blocked ? p.blocked.has(id) : false;
+      }
+      p.send(prof ? { type: 'profile', ...prof, mine: id === p.acc.id } : { type: 'error', code: 'no_profile' });
+      return;
+    }
+    case 'set_name': {
+      const n = cleanName(m.name);
+      if (n === 'Player' && String(m.name || '').trim() !== 'Player') return p.send({ type: 'error', code: 'bad_name' });
+      p.acc.name = p.name = n; await store.patch(p.acc.id, { name: n }); topCache.clear();
+      p.send(meMsg(p)); return;
+    }
+    case 'set_avatar': {
+      const a = Math.floor(+m.a);
+      if (!(a >= 0 && a < 96)) return;
+      p.acc.avatar = a; await store.patch(p.acc.id, { avatar: a }); topCache.clear();
+      p.send(meMsg(p)); return;
+    }
+    case 'set_country': {
+      const cc = String(m.cc || '').toUpperCase();
+      if (!/^[A-Z]{2}$/.test(cc) || (COUNTRIES && !COUNTRIES.has(cc))) return p.send({ type: 'error', code: 'bad_country' });
+      const wait = p.acc.ccChangedAt ? p.acc.ccChangedAt + R.CC_COOLDOWN - now() : 0;
+      if (wait > 0) return p.send({ type: 'error', code: 'cc_wait', days: Math.ceil(wait / 864e5) });
+      p.acc.cc = cc; p.acc.ccChangedAt = now(); await store.patch(p.acc.id, { cc, ccChangedAt: p.acc.ccChangedAt }); topCache.clear();
+      p.send(meMsg(p)); return;
+    }
+    case 'recovery': p.send({ type: 'recovery', code: await store.newRecovery(p.acc.id) }); return;
   }
+}
+// make sure the in-memory account is what the database has before reading a profile
+async function flush(p) { const fresh = await store.get(p.acc.id); if (fresh) Object.assign(p.acc, fresh); }
+
+/* season change: archive final standings, soft-reset everybody, refresh live players */
+let rolling = null;
+function ensureSeason() {
+  const cur = R.seasonId();
+  if (cur === season && rolling === null && ensureSeason.done) return Promise.resolve();
+  if (!rolling) rolling = store.rollover(cur).then(async (n) => {
+    if (n || cur !== season) {
+      season = cur; topCache.clear();
+      await bots.reload();
+      for (const p of players.values()) if (p.acc) { await flush(p); p.send(meMsg(p)); }
+      console.log('season', cur, n ? '(rolled over ' + n + ')' : '');
+    }
+    ensureSeason.done = true;
+  }).finally(() => { rolling = null; });
+  return rolling;
+}
+
+function countryOf(req, hint) {
+  const h = String(req.headers['cf-ipcountry'] || '').toUpperCase();
+  if (/^[A-Z]{2}$/.test(h) && h !== 'XX' && h !== 'T1') return h;
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
+  const g = geo && geo.lookup(ip.replace(/^::ffff:/, ''));
+  if (g && g.country) return g.country;
+  hint = String(hint || '').toUpperCase();
+  return /^[A-Z]{2}$/.test(hint) && (!COUNTRIES || COUNTRIES.has(hint)) ? hint : null;
 }
 
 /* ---------- the game itself as a web app (iPhone: Safari → Add to Home Screen) ---------- */
@@ -277,6 +481,7 @@ const WEB = (() => {
       '/manifest.webmanifest': { type: 'application/manifest+json', body: Buffer.from(JSON.stringify(pwa.manifest)), cache: 'public, max-age=3600' },
       '/sw.js': { type: 'text/javascript; charset=utf-8', body: Buffer.from(pwa.sw), cache: 'no-cache' },
     };
+    if (pwa.privacy) files['/privacy'] = { type: 'text/html; charset=utf-8', body: Buffer.from(pwa.privacy), cache: 'public, max-age=3600' };
     for (const [p, b64] of Object.entries(pwa.icons)) files[p] = { type: 'image/png', body: Buffer.from(b64, 'base64'), cache: 'public, max-age=604800' };
     for (const f of Object.values(files)) if (!f.type.startsWith('image/')) f.gz = zlib.gzipSync(f.body, { level: 9 });
     files['/index.html'] = files['/'];
@@ -300,52 +505,131 @@ const server = http.createServer((req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.url === '/healthz' || req.url.startsWith('/healthz?')) {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, protocol: PROTOCOL, online: onlineCount(), queue: queue.length, matches: matches.size,
-      total: totalMatches, uptime: Math.round((now() - startedAt) / 1000) }));
+    res.end(JSON.stringify({ ok: true, protocol: PROTOCOL, online: onlineCount(), players: humansOnline(), queue: queue.length, ranked: ranked.length, matches: matches.size,
+      total: totalMatches, season, store: store.kind, uptime: Math.round((now() - startedAt) / 1000) }));
     return;
   }
+  if (req.url.split('?')[0] === '/delete-account') return deletePage(req, res);
   if (serveWeb(req, res)) return;
   res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
   res.end('Reverse duel server\n');
 });
 
 const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 4096 });
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
   ws.alive = true;
   ws.on('pong', () => { ws.alive = true; });
-  let me = null;
-  ws.on('message', (data) => {
+  let me = null, opening = false;
+  ws.on('message', async (data) => {
     let m; try { m = JSON.parse(data); } catch (e) { return; }
     if (!m || typeof m.type !== 'string') return;
     if (!me) {
-      if (m.type !== 'hello') return;
+      if (m.type !== 'hello' || opening) return;
       if (m.v !== PROTOCOL) { ws.send(JSON.stringify({ type: 'error', code: 'old_client' })); return; }
-      const old = m.token && byToken.get(String(m.token));
-      if (old) {            // reconnect: take the seat back
-        if (old.ws && old.ws !== ws) try { old.ws.terminate(); } catch (e) { }
-        me = old; me.ws = ws; me.offlineAt = 0; if (m.name) me.name = cleanName(m.name);
-      } else me = new Player(ws, m.name);
-      me.boss = isBoss(m.key);
-      me.send({ type: 'welcome', id: me.id, token: me.token, online: onlineCount(), protocol: PROTOCOL, ...(me.boss ? { boss: true } : {}) });
-      if (me.match) {
-        me.send(me.match.resumeMsg(me.side));
-        me.match.p[1 - me.side].send({ type: 'opp_status', online: true });
-      }
+      opening = true;
+      try { me = await hello(ws, req, m); } catch (e) { console.error('hello failed', e); ws.send(JSON.stringify({ type: 'error', code: 'server' })); }
+      opening = false;
       return;
     }
     const t = now();
     if (t - me.rate.t > 1000) { me.rate.t = t; me.rate.n = 0; }
     if (++me.rate.n > 25) { if (me.rate.n > 80) ws.terminate(); return; }
-    try { handle(me, m); } catch (e) { console.error('handler error', e); }
+    try { await handle(me, m); } catch (e) { console.error('handler error', e); me.send({ type: 'error', code: 'server' }); }
   });
   ws.on('close', () => {
     if (!me || me.ws !== ws) return;
     me.ws = null; me.offlineAt = now();
+    social.onBye(me).catch(() => { });
     removeFromQueue(me); closeRoom(me);
     const m = me.match;
     if (m && !m.over) m.p[1 - me.side].send({ type: 'opp_status', online: false });
   });
 });
+
+/* account deletion (in the app, or on the web page with the transfer code): the seat is closed,
+   the profile and season results are removed, past opponents keep an anonymous line in their history */
+async function deleteAccount(id) {
+  const ok = await store.remove(id);
+  const p = byAcc.get(id);
+  if (p) {
+    freeUp(p);
+    players.delete(p.id); byToken.delete(p.token); byAcc.delete(id);
+    const ws = p.ws; p.ws = null;
+    if (ws) { try { ws.send(JSON.stringify({ type: 'deleted' })); ws.close(4001, 'deleted'); } catch (e) { } }
+  }
+  topCache.clear();
+  console.log('account deleted', id, ok);
+  return ok;
+}
+const delTries = new Map();   // ip -> { n, t }: a few code attempts per hour
+function deletePage(req, res) {
+  const page = (body) => {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'X-Content-Type-Options': 'nosniff' });
+    res.end(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Reverse — удаление аккаунта</title>
+<style>body{margin:0;background:#130b30;color:#f6f1ff;font:16px/1.5 system-ui,sans-serif;display:flex;justify-content:center;padding:24px 16px}
+main{max-width:460px;width:100%}h1{font-size:24px;margin:0 0 12px}p{color:#cfc6f2}.box{background:#241a55;border-radius:18px;padding:18px;margin:16px 0;box-shadow:0 4px 0 #0b0620}
+input{box-sizing:border-box;width:100%;height:52px;border:0;border-radius:12px;background:#1b1342;color:#fff;font:700 20px monospace;letter-spacing:.08em;text-align:center;text-transform:uppercase}
+button{width:100%;height:52px;margin-top:12px;border:0;border-radius:14px;background:#ff4d6d;color:#fff;font:700 17px system-ui;box-shadow:0 4px 0 #8a1830}
+small{color:#a99ed8}.ok{color:#5df2a8}.err{color:#ff8fa3}</style></head><body><main>${body}</main></body></html>`);
+  };
+  const form = (msg) => page(`<h1>Удаление онлайн-аккаунта Reverse</h1>
+<p>Онлайн-аккаунт хранит ник, страну, аватар, рейтинг, историю матчей, друзей и сообщения. Его можно удалить в игре: <b>Профиль → Удалить онлайн-аккаунт</b>. Если доступа к телефону нет, введите код переноса (Профиль → Перенос на другой телефон).</p>
+<p><small>Delete your Reverse online account: in the game open Profile → Delete online account, or enter your transfer code below. Your profile, rating and season results are removed at once; opponents keep an anonymous line in their match history. Records stored only on your device are removed by uninstalling the app.</small></p>
+<form class="box" method="post" action="/delete-account">${msg || ''}<input name="code" maxlength="20" placeholder="XXXX-XXXX-XXXX" autocomplete="off" required><button>Удалить аккаунт / Delete</button></form>`);
+  if (req.method === 'GET' || req.method === 'HEAD') return form();
+  if (req.method !== 'POST') { res.writeHead(405); return res.end(); }
+  const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
+  const t = now(), tr = delTries.get(ip) || { n: 0, t };
+  if (t - tr.t > 3600000) { tr.n = 0; tr.t = t; }
+  delTries.set(ip, tr);
+  let body = '';
+  req.on('data', (d) => { body += d; if (body.length > 1024) req.destroy(); });
+  req.on('end', async () => {
+    if (++tr.n > 8) return form('<p class="err">Слишком много попыток, попробуйте через час.</p>');
+    const code = new URLSearchParams(body).get('code') || '';
+    try {
+      const id = await store.idByCode(code);
+      if (!id) return form('<p class="err">Код не подошёл / Wrong code.</p>');
+      const p = byAcc.get(id);
+      if (p && p.match && !p.match.over) return form('<p class="err">Сейчас идёт матч, попробуйте после него.</p>');
+      await deleteAccount(id);
+      page('<h1 class="ok">Аккаунт удалён</h1><p>Онлайн-профиль, рейтинг и результаты сезонов удалены. Account deleted.</p>');
+    } catch (e) { console.error('delete failed', e); form('<p class="err">Ошибка сервера, попробуйте позже.</p>'); }
+  });
+}
+
+// sign in (or create an account), then take over this account's live seat if it has one
+async function hello(ws, req, m) {
+  await ensureSeason();
+  let acc = null, created = null, recovered = null;
+  if (m.recover) {
+    const r = await store.recover(m.recover);
+    if (r) { acc = r.acc; recovered = r.secret; }
+    else ws.send(JSON.stringify({ type: 'error', code: 'bad_code' }));
+  }
+  if (!acc && m.acc && m.acc.id && m.acc.secret) acc = await store.auth(String(m.acc.id), String(m.acc.secret));
+  if (!acc) {
+    const c = await store.create(cleanName(m.name), countryOf(req, m.region), season);
+    acc = c.acc; created = c;
+  }
+  let p = byAcc.get(acc.id);
+  if (p) {                                   // reconnect or second device: one seat per account
+    if (p.ws && p.ws !== ws) { try { p.ws.close(4000, 'replaced'); } catch (e) { } }
+    p.ws = ws; p.offlineAt = 0; Object.assign(p.acc, acc);
+  } else p = new Player(ws, acc);
+  p.boss = isBoss(m.key);
+  p.send({ type: 'welcome', token: p.token, online: onlineCount(), protocol: PROTOCOL, ...(p.boss ? { boss: true } : {}),
+    acc: created ? { id: acc.id, secret: created.secret, recovery: created.recovery, created: true }
+      : recovered ? { id: acc.id, secret: recovered, recovered: true } : { id: acc.id } });
+  p.send(meMsg(p));
+  // friends, inbox and moderation state load in the background so the first game messages are never dropped
+  social.onHello(p, m).then(() => { if (isOwnerCode(m.key)) p.send(meMsg(p)); }).catch((e) => console.error('social hello failed', e.message));
+  if (p.match) {
+    p.send(p.match.resumeMsg(p.side));
+    p.match.p[1 - p.side].send({ type: 'opp_status', online: true });
+  }
+  return p;
+}
 
 // heartbeat, abandoned seats, stale rooms, lobby counters
 setInterval(() => {
@@ -356,16 +640,28 @@ setInterval(() => {
   for (const p of players.values()) {
     if (p.ws || !p.offlineAt || t - p.offlineAt < GRACE) continue;
     if (p.match) p.match.leave(p, 'left');
-    players.delete(p.id); byToken.delete(p.token);
+    players.delete(p.id); byToken.delete(p.token); if (p.acc && byAcc.get(p.acc.id) === p) byAcc.delete(p.acc.id);
   }
   for (const [code, r] of rooms) if (t - r.at > ROOM_TTL || !r.host.online) { rooms.delete(code); r.host.room = null; }
 }, 5000);
 setInterval(() => {
   const n = onlineCount();
-  for (const p of players.values()) if (!p.match) p.send({ type: 'online', n, queue: queue.length });
+  for (const p of players.values()) if (!p.match) p.send({ type: 'online', n, queue: queue.length, ranked: ranked.length });
 }, 15000);
+setInterval(matchmake, 1000);
+setInterval(() => { bots.catchUp().then((n) => { if (n) topCache.clear(); }); }, 60000);
+setInterval(() => { if (R.seasonId() !== season) ensureSeason().catch((e) => console.error('season rollover failed', e)); }, 60000);
 
-server.listen(PORT, '0.0.0.0', () => console.log(`reverse duel server on :${PORT}`));
+// if the database is unreachable (expired free plan, wrong URL) the game still runs on the in-memory store
+const ready = store.init().catch((e) => {
+  console.error('DATABASE UNAVAILABLE, running on memory store (ratings will not persist):', e.message);
+  store = Store.create(null);
+  return store.init();
+}).then(() => { bots.setStore(store); return ensureSeason(); }).then(() => new Promise((res) => server.listen(PORT, '0.0.0.0', () => {
+  console.log(`reverse duel server on :${PORT}, ${store.kind} store, season ${season}`); res();
+}))).catch((e) => { console.error('startup failed', e); process.exit(1); });
+// bots come up right after: players can already connect while missed background games are filled in
+const botsReady = ready.then(() => bots.init()).then(() => { topCache.clear(); return social.loadWorld(); }).catch((e) => console.error('bots failed to start', e));
 process.on('SIGTERM', () => { wss.clients.forEach((ws) => ws.close(1012, 'restart')); server.close(() => process.exit(0)); });
 
-module.exports = { server, wss };
+module.exports = { server, wss, ready, botsReady, bots, get store() { return store; } };
